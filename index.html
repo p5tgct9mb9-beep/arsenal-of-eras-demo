@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Arsenal of Eras">
 <meta name="theme-color" content="#0b0d10">
-<meta name="description" content="Arsenal of Eras — browser prototype demo. Wave survival FPS across WW2, Cold War, Modern, Futuristic and Space eras.">
+<meta name="description" content="Arsenal of Eras — browser prototype demo. A scripted D-Day campaign mission plus wave survival across WW2, Cold War, Modern, Futuristic and Space eras.">
 <title>Arsenal of Eras — Prototype Demo</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
@@ -33,6 +33,11 @@
   <div id="flashfx"></div>
   <div id="prompt"></div>
   <div id="health"><span class="lbl" id="hplbl">HP</span><div id="hpbar"><div id="hpfill"></div></div><span id="hptext">100</span></div>
+  <div id="objective"></div>
+  <div id="objmarker"><i></i><span></span></div>
+  <div id="subs"></div>
+  <div id="underwater"></div>
+  <div id="fade"></div>
   <div id="ammo"><div id="wname"></div><div class="nums"><span id="mag">0</span><span id="res"> / 0</span></div><div id="slots"></div><div id="nades"></div><div id="ammo-veh"></div></div>
 </div>
 
@@ -47,13 +52,17 @@
   <div class="tbtn" id="b-nade" data-b="nade">💣</div>
   <div class="tbtn" id="b-tac" data-b="tac">☁</div>
   <div class="tbtn" id="b-enter" data-b="enter">ENTER</div>
+  <div class="tbtn" id="b-crouch" data-b="crouch">▼</div>
 </div>
 
 <div id="title" class="screen">
   <div class="panel">
     <h1>ARSENAL OF ERAS <small>— Prototype Demo</small></h1>
-    <p class="sub">Wave survival · choose your era</p>
-    <div id="eras"></div>
+    <div id="modes">
+      <button class="mode mode-camp" id="mode-campaign"><small>CAMPAIGN</small><b>Mission 8 · Dog Green</b><i>Omaha Beach · 6 June 1944 · Cpl. Walter Hale</i><em></em></button>
+      <button class="mode mode-surv" id="mode-survival"><small>SURVIVAL</small><b>Wave survival</b><i>5 eras · loadouts · grenades · tanks</i><em>Choose your era ›</em></button>
+    </div>
+    <div id="surv"><p class="sub"><button id="surv-back" class="linkbtn">‹ Modes</button> Survival · choose your era</p><div id="eras"></div></div>
     <p id="controls" class="controls"></p>
     <p class="fine">Browser prototype by LT Vasquez — not the final Unreal Engine 5 game. Sound on? Flip your iPhone's silent switch off.</p>
   </div>
@@ -92,6 +101,52 @@
         <button id="lo-deploy" class="lo-btn big">DEPLOY ▶</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="campaign" class="screen hidden">
+  <div class="panel">
+    <div class="c-head"><button id="camp-back" class="lo-btn">‹ Back</button><div><h2>CAMPAIGN</h2><p class="sub">The Hale bloodline across the eras · demo: Mission 8 playable</p></div></div>
+    <div id="camp-tiles" class="tiles"></div>
+    <p class="fine">The Hale family and their squads are fictional; the battles are real. This browser demo includes one mission.</p>
+  </div>
+</div>
+
+<div id="briefing" class="screen hidden">
+  <div class="brief">
+    <div class="b-main">
+      <p class="b-date">6 JUNE 1944 · H-HOUR 06:30</p>
+      <h2>MISSION 8 — DOG GREEN</h2>
+      <p class="b-loc">Omaha Beach, Normandy · Sector Dog Green · Cpl. Walter Hale, US Army assault infantry, first wave</p>
+      <p class="b-crawl">Operation Overlord is under way. Your landing craft is heading for the western end of Omaha Beach, below a bluff lined with concrete machine-gun positions. Get across the sand, breach the wire, and open the draw so the waves behind you can get off the beach.</p>
+      <ol class="b-obj">
+        <li>Survive the run-in and the ramp drop</li>
+        <li>Move from obstacle to obstacle to the shingle bank</li>
+        <li>Blow the wire with a Bangalore torpedo and open a path up the bluff</li>
+        <li>Clear the strongpoint covering the draw</li>
+        <li>Call destroyer fire on the bunkers and relay word from the Rangers at Pointe du Hoc</li>
+      </ol>
+      <div id="brief-radio"></div>
+    </div>
+    <div class="b-side">
+      <h4>PRIMARY</h4>
+      <div id="brief-weapons" class="chips one"></div>
+      <p class="b-kit">Sidearm: Colt M1911 · 3× Mk 2 frag · 3× M18 smoke<br>Bangalore torpedo · satchel charge</p>
+      <button id="brief-go" class="lo-btn big">BEGIN MISSION ▶</button>
+      <button id="brief-back" class="lo-btn">‹ Missions</button>
+    </div>
+  </div>
+</div>
+
+<div id="mission" class="screen hidden">
+  <div class="panel">
+    <h2 class="win">MISSION COMPLETE</h2>
+    <p class="sub">Dog Green · Omaha Beach · 6 June 1944</p>
+    <div id="mission-stats"></div>
+    <p class="memorial">In memory of the soldiers, sailors and airmen who landed at Omaha Beach. American forces there took around 2,400 casualties on D-Day.</p>
+    <h4 class="soon">COMING SOON: MORE MISSIONS</h4>
+    <div id="mission-soon" class="tiles small"></div>
+    <div class="m-btns"><button id="btn-m-replay" class="lo-btn big">Replay mission</button><button id="btn-m-camp" class="lo-btn">Campaign</button><button id="btn-m-menu" class="lo-btn">Main menu</button></div>
   </div>
 </div>
 

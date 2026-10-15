@@ -8,6 +8,28 @@ A small, playable **browser FPS prototype** for *Arsenal of Eras*, a Battlefield
 
 ## What's in the demo
 
+The title screen has two modes: **Campaign** (one scripted story mission) and **Survival** (wave survival across five eras).
+
+### Campaign — Mission 8 "Dog Green" (Omaha Beach, 6 June 1944)
+A scripted mission of about 5–10 minutes, based on Mission 8 of the game bible. You play **Cpl. Walter Hale**, a fictional US Army assault infantryman in the first wave. Hale, his squad (Sgt. Rourke, Pvts. Alvarez, Kowalski and Brooks) and the strongpoint are invented. The landing is not, and the mission tries to treat it with respect.
+
+1. **Briefing:** date, place, objectives and radio lines. You pick a primary (M1 Garand, Thompson or BAR). You also carry a Colt M1911, 3 Mk 2 frags and 3 M18 smoke grenades.
+2. **Run-in:** you ride a Higgins boat (LCVP) with your squad. Shell splashes hit the water around you and rounds ping off the ramp. Then the ramp drops. When you step off into the water, the sound goes muffled for a moment before it comes back.
+3. **Beach:** MG 42 bunkers on the bluff sweep the sand with tracer fire. Move from obstacle to obstacle (Czech hedgehogs, Belgian gates, log ramps) to the shingle bank.
+   - Crouching behind cover breaks the gunners' line of sight, and so does smoke. Shooting at a bunker's slit suppresses it for a moment.
+   - Squadmates follow you, take cover behind obstacles and shoot back. A Sherman on the sand fires at the bluff.
+   - The tide creeps in behind you.
+4. **Bangalore breach:** at the marker on the wire, press **E** / tap **USE** to place the torpedo (it takes about 2 seconds). The fuse burns for 5 seconds, so get back before it blows a gap in the wire.
+5. **Bluff draw:** climb the draw while riflemen shoot from the top. Destroy the MG bunker with a **frag** (one that reaches the bunker drops in through the slit or door) or a **satchel charge** on the rear door. Then clear the trench line.
+6. **Destroyer fire support:** use Kowalski's radio to call a destroyer onto the concrete strongpoint. The shells come in and destroy it. Then you relay word from the Rangers holding Pointe du Hoc to the beachmaster.
+7. **Mission complete:** a stats screen (time, kills, accuracy, deaths), a short memorial line, and a "Coming soon: more missions" row of locked tiles: Point Luck (Midway), Devil's Gardens (El Alamein), Steel Winter (Stalingrad), Suribachi (Iwo Jima), Tidal Wall (Inchon), Ia Drang, Left Hook (73 Easting) and Phantom Fury (Fallujah).
+
+Also in the campaign:
+- Objective text and a world marker with distance on the HUD, plus subtitles for all dialog. There are no voice recordings; radio lines get a squelch sound.
+- Checkpoints along the way. If you die, you respawn at the last one with full health, ammo and grenades, and the deaths counter goes up.
+- The look is overcast with fog, a low-poly animated sea, sand, and low-poly bunkers and obstacles.
+
+### Survival
 - **Wave survival** against enemy bots. They run at you, strafe and shoot back, and they also go after your tank. Each wave adds more of them, and they get tougher.
 - **Five eras.** Each has its own arena look, enemies, weapon pool, grenades and tank:
 
@@ -58,16 +80,17 @@ You go through it after picking an era. You can also open it from **Pause → Lo
 - **Drag on the right side:** look, or aim the turret.
 - **FIRE:** hold to shoot, or to fire the cannon.
 - **AIM:** aim down sights, or zoom in the tank.
-- **R:** reload. **⇄:** swap weapon. **▲:** jump.
-- **💣:** throw your lethal grenade. **☁ / ✷:** throw your tactical grenade. **ENTER / EXIT:** get in or out of the tank (only shows up when you're near it). **II:** pause.
+- **R:** reload. **⇄:** swap weapon. **▲:** jump. **▼:** crouch (tap to toggle).
+- **💣:** throw your lethal grenade. **☁ / ✷:** throw your tactical grenade. **II:** pause.
+- **ENTER / EXIT:** get in or out of the tank. **USE** (campaign): place the Bangalore, set the satchel, or use the radio. These buttons only show up when you're close enough to use them.
 - The loadout lists scroll with your finger, and the buttons are big enough to tap easily.
 - Tip: use Safari *Share → Add to Home Screen*. Turn the silent switch off to hear sound.
 
 **Desktop:**
-- Click to lock the mouse. **WASD** to move, **Shift** to sprint, **Space** to jump. **Mouse** to look, **left click** to fire, **right click** to aim.
+- Click to lock the mouse. **WASD** to move, **Shift** to sprint, **Space** to jump, **C** (or Left Ctrl) to crouch. **Mouse** to look, **left click** to fire, **right click** to aim.
 - **R** reload. **1 / 2**, **Q** or the wheel to swap weapons.
-- **G** lethal grenade. **T** or **F** tactical grenade. **E** get in or out of the vehicle.
-- **Esc** pauses. The pause menu has **Loadout**, Restart and Era select.
+- **G** lethal grenade. **T** or **F** tactical grenade. **E** get in or out of the vehicle, or use something in the campaign.
+- **Esc** pauses. In Survival the pause menu has **Loadout**, Restart and Era select. In the campaign it has Restart mission and Main menu.
 
 ## Tech
 
@@ -83,7 +106,8 @@ You go through it after picking an era. You can also open it from **Pause → Lo
 
 | File | Purpose |
 |---|---|
-| `js/main.js` | Game loop, player movement, weapons, waves, HUD |
+| `js/main.js` | Game loop, player movement, weapons, waves, HUD, menus |
+| `js/campaign.js` | Campaign: the Omaha Beach map, mission script and phases, MG bunkers, squadmates, checkpoints, destroyer barrage |
 | `js/eras.js` | Era data, weapon pools, grenade names and vehicle specs. This is the place to tweak balance |
 | `js/loadout.js` | Attachment, grenade and gear data, stat math, saving, and the loadout menu UI |
 | `js/grenades.js` | Grenade physics, smoke clouds and flash |
@@ -98,6 +122,14 @@ You go through it after picking an era. You can also open it from **Pause → Lo
 To run it locally, serve the folder with any static server, for example `python3 -m http.server`, and open `http://localhost:8000`. Opening it straight from `file://` won't work because ES modules need a server.
 
 ## Known limitations (prototype)
+
+- **Campaign:**
+  - There is only one mission. The others are locked placeholders.
+  - Squadmates are simple followers. They can't be hurt and only rarely hit anything, and if they get stuck they can teleport to catch up when you're far away.
+  - The terrain is boxes (stepped bluff, flat sand), so there's no real slope or crawling, only crouch.
+  - The Sherman and the destroyer are scripted set dressing.
+  - The rising tide only changes the look and slows you down in the water.
+  - Enemies on the bluff stay in place and don't move.
 
 - The bots use simple steering and don't use cover. They can bunch up behind large buildings.
 - There are no aircraft yet; each era has one tank. Tank collision is approximate (three circles along the hull), and the third-person camera can clip through thin geometry.

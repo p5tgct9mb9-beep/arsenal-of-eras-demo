@@ -4,6 +4,9 @@ import * as THREE from 'three';
 
 export const HALF = 42;      // playable half-size (meters)
 const STEP = 0.55;           // max step-up height
+// playable bounds (survival arena by default; the campaign map is longer)
+const B = { x0: -HALF, x1: HALF, z0: -HALF, z1: HALF };
+export function setBounds(x0 = -HALF, x1 = HALF, z0 = -HALF, z1 = HALF) { B.x0 = x0; B.x1 = x1; B.z0 = z0; B.z1 = z1; }
 
 function rngFrom(str) {
   let h = 1779033703 ^ str.length;
@@ -247,7 +250,7 @@ export function collide(cols, pos, r, feetY, height = 1.8) {
       if (m === l) pos.x = c.minX - r; else if (m === rr) pos.x = c.maxX + r; else if (m === b) pos.z = c.minZ - r; else pos.z = c.maxZ + r;
     }
   }
-  pos.x = Math.max(-HALF + r, Math.min(HALF - r, pos.x)); pos.z = Math.max(-HALF + r, Math.min(HALF - r, pos.z));
+  pos.x = Math.max(B.x0 + r, Math.min(B.x1 - r, pos.x)); pos.z = Math.max(B.z0 + r, Math.min(B.z1 - r, pos.z));
 }
 
 export function groundAt(cols, x, z, r, feetY) {
@@ -264,6 +267,7 @@ export function rayWorld(cols, o, d, maxT = 300) {
   let best = maxT;
   if (d.y < -1e-6) { const t = -o.y / d.y; if (t > 0 && t < best) best = t; }
   for (const c of cols) {
+    if (c.noRay) continue; // movement-only blockers (e.g. campaign wire) don't stop bullets or sight
     const t = rayBox(o, d, c.minX, c.minY, c.minZ, c.maxX, c.top, c.maxZ, best);
     if (t < best) best = t;
   }

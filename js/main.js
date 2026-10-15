@@ -1,7 +1,8 @@
 // Arsenal of Eras — browser prototype demo. Game loop, player, weapons, grenades, vehicles, waves, HUD.
 import * as THREE from 'three';
 import { ERAS, ERA_ORDER } from './eras.js';
-import { buildWorld, collide, groundAt, rayWorld, insideAny } from './world.js';
+import { buildWorld, collide, groundAt, rayWorld, insideAny, setBounds } from './world.js';
+import { Campaign, MISSIONS, CAMP_ERA } from './campaign.js';
 import { buildViewmodel, buildFlash, applyAttachments } from './viewmodels.js';
 import { Enemy } from './enemies.js';
 import { FX } from './fx.js';
@@ -43,13 +44,13 @@ function resize() {
 addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 250)); resize();
 
 // ---------- game state
-const player = { pos: new THREE.Vector3(), vy: 0, onGround: true, yaw: 0, pitch: 0, hp: 100, maxHp: 100, alive: true, eye: new THREE.Vector3(0, 1.6, 0), moving: false, lastHit: -99, recoil: 0, bob: 0 };
+const player = { crouch: false, eyeH: 1.6, eyeOff: 0, pos: new THREE.Vector3(), vy: 0, onGround: true, yaw: 0, pitch: 0, hp: 100, maxHp: 100, alive: true, eye: new THREE.Vector3(0, 1.6, 0), moving: false, lastHit: -99, recoil: 0, bob: 0 };
 const G = {
   state: 'title', eraKey: 'ww2', era: ERAS.ww2, world: null, enemies: [], wave: 0, toSpawn: 0, maxAlive: 4, spawnT: 0, interT: 0,
   score: 0, kills: 0, heads: 0, shots: 0, hits: 0, lowG: false, player, time: 0, god: false, lo: null,
   nades: { lethal: 2, tac: 2 }, nadeMax: 2, vehicle: null, inVeh: false,
   tgtPos: player.pos, tgtEye: player.eye, grenades: null,
-  onEnemyShot,
+  onEnemyShot, mode: 'survival', camp: null, campPrimary: 'garand',
 };
 const W = { list: [], cur: 0, cool: 0, reloadT: 0, swapT: 0, swapTo: -1, ads: 0, kick: 0, latch: false, dryT: 0, flashT: 0, throwT: 0 };
 const projectiles = [];
@@ -67,6 +68,8 @@ G.grenades = new Grenades(scene, {
 // ---------- UI wiring
 function buildTitle() {
   const wrap = $('eras'); wrap.innerHTML = '';
+  const best = +localStorage.getItem('aoe-camp-dog-green') || 0;
+  $('mode-campaign').querySelector('em').textContent = best ? `Best time ${fmtTime(best)}` : 'New · ~5–10 min';
   for (const k of ERA_ORDER) {
     const e = ERAS[k], best = +localStorage.getItem('aoe-best-' + k) || 0;
     const c = document.createElement('button'); c.className = 'era era-' + k; c.dataset.era = k;
@@ -76,16 +79,46 @@ function buildTitle() {
     wrap.appendChild(c);
   }
 }
+function fmtTime(t) { t = Math.round(t); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; }
+function titleView(v) { $('title').classList.toggle('surv', v === 'survival'); }
+$('mode-survival').onclick = () => { A.initAudio(); titleView('survival'); };
+$('surv-back').onclick = () => titleView('modes');
+$('mode-campaign').onclick = () => { A.initAudio(); showCampaign(); };
+function showCampaign() {
+  G.state = 'menu'; show('title', false); show('briefing', false); show('mission', false); show('campaign', true);
+  $('camp-tiles').innerHTML = MISSIONS.map(m => m.playable
+    ? `<button class="mtile play" id="mt-${m.id}"><small>Mission ${m.n} · ${m.date}</small><b>${m.name}</b><i>${m.place}</i><span>${m.pov} · PLAY ▶</span></button>`
+    : `<div class="mtile locked"><small>Mission ${m.n} · ${m.date}</small><b>🔒 ${m.name}</b><i>${m.place}</i><span>Coming soon</span></div>`).join('');
+  $('mt-dog-green').onclick = () => showBriefing();
+}
+$('camp-back').onclick = () => toTitle();
+const BRIEF_W = [['garand', 'M1 Garand', 'Semi-auto rifle · 8-round clip'], ['thompson', 'Thompson M1A1', 'SMG · close range'], ['bar', 'M1918 BAR', 'Automatic rifle · 20-round mag']];
+function showBriefing() {
+  G.state = 'menu'; show('campaign', false); show('briefing', true);
+  const sel = localStorage.getItem('aoe-camp-primary') || 'garand';
+  G.campPrimary = BRIEF_W.find(w => w[0] === sel) ? sel : 'garand';
+  const draw = () => { $('brief-weapons').innerHTML = BRIEF_W.map(([id, n, d]) => `<button class="chip${id === G.campPrimary ? ' on' : ''}" data-w="${id}"><b>${n}</b><i>${d}</i></button>`).join(''); $('brief-weapons').querySelectorAll('[data-w]').forEach(b => b.onclick = () => { G.campPrimary = b.dataset.w; try { localStorage.setItem('aoe-camp-primary', G.campPrimary); } catch (e) {} draw(); }); };
+  draw();
+  const log = $('brief-radio'); log.innerHTML = '';
+  [['RADIO', 'Naval bombardment lifting. First wave, stand by.'], ['RADIO', 'Dog Green is covered by machine guns in concrete on the bluff, with wire and obstacles on the sand.'], ['Sgt. Rourke', 'Get off the beach, open that draw, and the Navy will be listening for our call.']]
+    .forEach(([w, t], i) => { const d = document.createElement('div'); d.style.animationDelay = (0.6 + i * 1.6) + 's'; d.innerHTML = `<b>${w}:</b> ${t}`; log.appendChild(d); });
+  A.playRadio();
+}
+$('brief-back').onclick = () => showCampaign();
+$('brief-go').onclick = () => { A.initAudio(); startCampaign(G.campPrimary); };
+$('btn-m-replay').onclick = () => { A.initAudio(); startCampaign(G.campPrimary); };
+$('btn-m-camp').onclick = () => { toTitle(); showCampaign(); };
+$('btn-m-menu').onclick = () => toTitle();
 $('btn-resume').onclick = () => resume();
-$('btn-restart').onclick = () => { A.initAudio(); startGame(G.eraKey); };
+$('btn-restart').onclick = () => { A.initAudio(); if (G.mode === 'campaign') startCampaign(G.campPrimary); else startGame(G.eraKey); };
 $('btn-menu').onclick = () => toTitle();
 $('btn-lo-pause').onclick = () => showLoadout(G.eraKey, 'pause');
 $('btn-again').onclick = () => { A.initAudio(); startGame(G.eraKey); };
 $('btn-lo-over').onclick = () => showLoadout(G.eraKey, 'over');
 $('btn-menu2').onclick = () => toTitle();
 $('controls').innerHTML = isTouch
-  ? 'Left thumb: move (push to edge = sprint) · Drag right side: look · FIRE · AIM · R reload · ⇄ swap · ▲ jump · 💣 lethal · ☁ tactical · ENTER vehicle'
-  : 'WASD move · Shift sprint · Space jump · Mouse look · Click fire · Right-click aim · R reload · 1-2 / Q / wheel swap · G grenade · T/F tactical · E vehicle · Esc pause';
+  ? 'Left thumb: move (push to edge = sprint) · Drag right side: look · FIRE · AIM · R reload · ⇄ swap · ▲ jump · ▼ crouch · 💣 lethal · ☁ tactical · ENTER vehicle / USE'
+  : 'WASD move · Shift sprint · Space jump · C crouch · Mouse look · Click fire · Right-click aim · R reload · 1-2 / Q / wheel swap · G grenade · T/F tactical · E vehicle / use · Esc pause';
 
 initInput(canvas, () => G.state === 'play', () => { if (G.state === 'play') pause(); });
 
@@ -121,7 +154,10 @@ function setPreview(def, att, k) {
 
 // ---------- world setup
 function clearWorld() {
+  if (G.camp) { G.camp.dispose(); G.camp = null; G.world = null; }
   if (G.world) G.world.dispose();
+  setBounds(); document.body.classList.remove('campaign'); player.eyeOff = 0; input.crouch = false;
+  $('fade').classList.remove('on'); $('subs').classList.remove('on'); $('objmarker').style.display = 'none';
   for (const e of G.enemies) e.dispose(scene);
   G.enemies = []; G.world = null;
   if (G.vehicle) { G.vehicle.dispose(); G.vehicle = null; }
@@ -169,7 +205,7 @@ function spawnVehicle() {
 }
 
 function startGame(k) {
-  clearWorld();
+  clearWorld(); G.mode = 'survival'; pauseLabels();
   G.eraKey = k; G.era = ERAS[k]; G.lowG = G.era.gravity < 8;
   G.world = buildWorld(scene, G.era, k);
   for (let i = 0; i < 10; i++) G.enemies.push(new Enemy(scene, G.era));
@@ -193,9 +229,60 @@ function startGame(k) {
   if (!isTouch) lock();
 }
 
+function pauseLabels() {
+  const c = G.mode === 'campaign';
+  $('btn-restart').textContent = c ? 'Restart mission' : 'Restart era'; $('btn-menu').textContent = c ? 'Main menu' : 'Era select';
+  $('btn-lo-pause').classList.toggle('hidden', c);
+}
+const campApi = {
+  scene, fx, G, player, camera, isTouch,
+  spawnEnemy(p) { let e = G.enemies.find(e => !e.active); if (!e) { e = new Enemy(scene, G.era); G.enemies.push(e); } e.spawn(p, 1); return e; },
+  explode: (p, def, direct, selfMul) => explode(p, def, direct, selfMul),
+  hurtPlayer: (d, f) => hurtPlayer(d, f), centerMsg: (t, d) => centerMsg(t, d), feed: (h) => feed(h),
+  shake: (v) => { shake = Math.max(shake, v); },
+  refill() { for (const w of W.list) { w.mag = w.def.mag; w.reserve = w.def.reserve; } G.nades.lethal = G.nades.tac = G.nadeMax; W.reloadT = 0; hudAll(); },
+  complete: (s) => missionComplete(s),
+};
+function startCampaign(primary) {
+  clearWorld(); G.mode = 'campaign'; pauseLabels();
+  G.eraKey = 'ww2'; G.era = CAMP_ERA; G.lowG = false; G.campPrimary = primary;
+  setBounds(-40, 40, -138, 60);
+  G.camp = new Campaign(campApi);
+  for (let i = 0; i < 8; i++) G.enemies.push(new Enemy(scene, G.era));
+  fx.gravity = 10; A.setMuffled(false);
+  vmHemi.color.setHex(0xd4d8dc); vmHemi.intensity = 1.0; vmSun.color.setHex(0xe8e8e2);
+  applyLoadout({ p: primary, s: 'm1911', att: {}, lethal: 'frag', tactical: 'smoke', gear: 'nades' });
+  Object.assign(player, { vy: 0, onGround: true, yaw: 0, pitch: 0, hp: player.maxHp, alive: true, lastHit: -99, recoil: 0, crouch: false, eyeH: 1.6, eyeOff: 0 });
+  player.pos.set(-4, 1, 153.2);
+  G.nades.lethal = G.nades.tac = G.nadeMax;
+  Object.assign(G, { wave: 1, toSpawn: 0, spawnT: 0, interT: 0, score: 0, kills: 0, heads: 0, shots: 0, hits: 0, time: 0 });
+  $('killfeed').innerHTML = '';
+  resetInput();
+  for (const id of ['title', 'pause', 'over', 'loadout', 'campaign', 'briefing', 'mission']) show(id, false);
+  show('hud', true); show('touch', isTouch);
+  document.body.classList.remove('scoped', 'inveh'); document.body.classList.add('campaign');
+  G.state = 'play';
+  G.camp.start();
+  centerMsg('6 JUNE 1944 — OMAHA BEACH', 3);
+  hudAll();
+  if (!isTouch) lock();
+}
+function missionComplete(s) {
+  G.state = 'complete'; unlock(); resetInput(); A.ambience(false);
+  const key = 'aoe-camp-dog-green', prev = +localStorage.getItem(key) || 0, best = prev ? Math.min(prev, s.time) : s.time;
+  try { localStorage.setItem(key, best); } catch (e) {}
+  const acc = G.shots ? Math.round(100 * G.hits / G.shots) : 0;
+  $('mission-stats').innerHTML = `<div><b>${fmtTime(s.time)}</b>Time${best === s.time ? ' · best' : ''}</div><div><b>${G.kills}</b>Kills</div><div><b>${acc}%</b>Accuracy</div><div><b>${s.deaths}</b>Deaths</div>`;
+  $('mission-soon').innerHTML = MISSIONS.filter(m => !m.playable).map(m => `<div class="mtile locked"><small>Mission ${m.n}</small><b>🔒 ${m.name}</b><i>${m.place} · ${m.date}</i></div>`).join('');
+  A.playHorn(true);
+  setTimeout(() => { if (G.state === 'complete') { show('hud', false); show('touch', false); show('mission', true); } }, 600);
+}
 function pause() { G.state = 'paused'; resetInput(); show('pause', true); unlock(); A.engine(false); }
-function resume() { A.initAudio(); show('pause', false); show('touch', isTouch); resetInput(); G.state = 'play'; if (!isTouch) lock(); }
+function resume() { A.initAudio(); show('pause', false); show('touch', isTouch); resetInput(); G.state = 'play'; if (!isTouch) lock(); if (G.camp && G.camp.phase === 'boat' && !G.camp.rampDown) A.engine(true, 0.7, false); }
 function toTitle() {
+  if (G.camp) { clearWorld(); preview('ww2'); }
+  for (const id of ['campaign', 'briefing', 'mission']) show(id, false);
+  titleView(G.mode === 'survival' && G.state !== 'title' && G.state !== 'menu' ? 'survival' : 'modes'); // survival players go back to the era grid
   G.state = 'title'; unlock(); show('pause', false); show('over', false); show('hud', false); show('touch', false); show('loadout', false); show('title', true);
   document.body.classList.remove('scoped', 'inveh'); vmRoot.clear(); buildTitle(); A.engine(false);
   if (G.inVeh) G.inVeh = false;
@@ -325,6 +412,7 @@ function hitscan(o, d, def, from, color, quiet) {
   const end = o.clone().addScaledVector(d, Math.min(endT, 200));
   if (worldT < 260 && (n === 0 || def.pierce)) {
     const wp = o.clone().addScaledVector(d, worldT - 0.05);
+    if (G.camp) G.camp.onImpact(wp);
     fx.burst(wp, def.kind === 'bullet' ? 0xd8c8a0 : color, def.kind === 'rail' ? 18 : quiet ? 2 : 5, def.kind === 'rail' ? 5 : 2.5, 0.35);
   }
   if (def.kind === 'rail') { fx.tracer(from, end, color, 0.08, 0.4); fx.tracer(from, end, 0xffffff, 0.025, 0.25); for (let i = 0; i < 10; i++) fx.trail(from.clone().lerp(end, i / 10), color); }
@@ -358,6 +446,7 @@ function explode(p, def, direct, selfMul = 0) {
     if (e === direct) damageEnemy(e, def.dmg, false, def.name);
     else if (d < def.splash) damageEnemy(e, def.dmg * (1 - d / def.splash) * 0.85, false, def.name);
   }
+  if (G.camp) G.camp.onExplosion(p, def.splash, def.name);
   if (selfMul > 0) {
     if (G.inVeh) { const d = p.distanceTo(G.vehicle.pos); if (d < def.splash + 2) damageVehicle(def.dmg * 0.3 * (1 - d / (def.splash + 2))); }
     else if (player.alive) {
@@ -557,12 +646,15 @@ function updateVehicle(dt) {
 // ---------- player
 function updatePlayer(dt) {
   pollMove();
+  if (G.camp && !player.alive) { input.lookX = input.lookY = 0; input.enter = input.jump = false; camera.position.y = Math.max(player.pos.y + 0.4, camera.position.y - dt * 2); return; }
   const sens = camera.fov / 75;
   player.yaw -= input.lookX * sens; player.pitch -= input.lookY * sens; input.lookX = input.lookY = 0;
   player.pitch = Math.max(-1.45, Math.min(1.45, player.pitch));
   const def = curW().def;
   const sprint = input.sprint && input.my > 0.3 && W.ads < 0.2;
-  const speed = 6.2 * (sprint ? 1.45 : 1) * (1 - 0.45 * W.ads) * (def.mob || 1);
+  if (sprint && input.crouch) input.crouch = false;
+  player.crouch = input.crouch;
+  const speed = 6.2 * (sprint ? 1.45 : 1) * (1 - 0.45 * W.ads) * (def.mob || 1) * (player.crouch ? 0.55 : 1) * (G.camp ? G.camp.speedMul() : 1);
   const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
   const fx_ = -sy * input.my + cy * input.mx, fz_ = -cy * input.my - sy * input.mx;
   const mag = Math.hypot(input.mx, input.my);
@@ -578,14 +670,23 @@ function updatePlayer(dt) {
   player.vy -= grav * dt; player.pos.y += player.vy * dt;
   const gnd = groundAt(G.world.colliders, player.pos.x, player.pos.z, 0.4, player.pos.y);
   if (player.pos.y <= gnd) { player.pos.y = gnd; player.vy = 0; player.onGround = true; } else player.onGround = player.pos.y - gnd < 0.02;
+  if (G.camp) G.camp.constrainPlayer();
   player.recoil *= Math.exp(-dt * 7);
   shake *= Math.exp(-dt * 6);
-  player.eye.set(player.pos.x, player.pos.y + 1.6, player.pos.z);
-  camera.position.copy(player.eye);
+  player.eyeH += ((player.crouch ? 1.0 : 1.6) - player.eyeH) * Math.min(1, dt * 12);
+  player.eye.set(player.pos.x, player.pos.y + player.eyeH, player.pos.z);
+  camera.position.copy(player.eye); camera.position.y += player.eyeOff || 0;
   camera.position.y += Math.abs(Math.cos(player.bob)) * 0.04 * (player.moving && player.onGround ? 1 : 0) * (1 - W.ads);
   if (shake > 0.001) camera.position.add(tmpV.set((Math.random() - .5) * shake, (Math.random() - .5) * shake, 0));
   camera.rotation.set(player.pitch + player.recoil, player.yaw, 0);
   if (player.alive && G.time - player.lastHit > 4.5 && player.hp < player.maxHp) { player.hp = Math.min(player.maxHp, player.hp + 14 * dt); hudHp(); }
+  if (G.camp) {
+    const u = G.camp.use;
+    $('prompt').classList.toggle('on', !!u); document.body.classList.toggle('nearveh', !!u);
+    if (u) $('prompt').textContent = `${isTouch ? 'Tap USE' : 'Press E'} — ${u.text}`;
+    if (input.enter) { input.enter = false; if (u) G.camp.onUse(); }
+    return;
+  }
   // vehicle prompt / enter
   const near = nearVehicle();
   $('prompt').classList.toggle('on', near); document.body.classList.toggle('nearveh', near);
@@ -602,7 +703,7 @@ function hurtPlayer(dmg, from) {
     const di = $('dmgdir'); di.style.transform = `rotate(${-rel}rad)`; di.classList.remove('on'); void di.offsetWidth; di.classList.add('on');
   }
   hudHp();
-  if (player.hp <= 0) { player.hp = 0; hudHp(); gameOver(); }
+  if (player.hp <= 0) { player.hp = 0; hudHp(); if (G.camp) G.camp.onPlayerDeath(); else gameOver(); }
 }
 
 function onEnemyShot(e, muzzle, end, hit, dist) {
@@ -644,11 +745,11 @@ function hudAll() {
   $('wave').textContent = G.wave ? 'WAVE ' + G.wave : 'WAVE —'; $('score').textContent = G.score;
   $('era-tag').textContent = G.era.name.toUpperCase();
   $('slots').innerHTML = W.list.map((w, i) => `<span class="${i === W.cur ? 'cur' : ''}">${i + 1} ${w.def.name}</span>`).join('');
-  $('b-enter').textContent = G.inVeh ? 'EXIT' : 'ENTER';
+  $('b-enter').textContent = G.camp ? 'USE' : G.inVeh ? 'EXIT' : 'ENTER';
   if (G.inVeh) $('wname').textContent = G.vehicle.spec.cannon;
 }
 function hudTick(dt) {
-  const left = G.toSpawn + aliveCount(); $('enemies').textContent = G.interT > 0 ? `NEXT WAVE ${Math.ceil(G.interT)}` : `HOSTILES ${left}`;
+  if (!G.camp) { const left = G.toSpawn + aliveCount(); $('enemies').textContent = G.interT > 0 ? `NEXT WAVE ${Math.ceil(G.interT)}` : `HOSTILES ${left}`; }
   const r = W.reloadT > 0 && !G.inVeh; $('reloadbar').classList.toggle('on', r); if (r) $('reloadfill').style.width = (100 * (1 - W.reloadT / curW().def.reload)) + '%';
   if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('center-msg').classList.remove('on'); }
   if (G.inVeh) { $('crosshair').style.setProperty('--gap', '10px'); $('crosshair').style.opacity = 1; hudHp(); return; }
@@ -671,13 +772,19 @@ function loop() {
   const dt = Math.min(clock.getDelta(), 0.05);
   if (G.state === 'play' && !portraitBlock()) {
     G.time += dt;
-    if (G.inVeh) { updateVehicle(dt); if (!G.inVeh) updatePlayer(0); }
+    if (G.camp) { updatePlayer(dt); updateWeapons(dt); }
+    else if (G.inVeh) { updateVehicle(dt); if (!G.inVeh) updatePlayer(0); }
     else { updatePlayer(dt); updateWeapons(dt); updateVehicle(dt); }
     setTarget();
     for (const e of G.enemies) e.update(dt, G);
     G.grenades.update(dt, G);
-    updateProjectiles(dt); updateWaves(dt); hudTick(dt);
-  } else if (G.state === 'title' || (G.state === 'loadout' && G.loFrom === 'title')) {
+    updateProjectiles(dt);
+    if (G.camp) G.camp.update(dt); else updateWaves(dt);
+    hudTick(dt);
+  } else if (G.state === 'complete' && G.camp) {
+    G.camp.updateSea(dt); G.camp.updateFx(dt);
+    player.yaw += dt * 0.05; camera.rotation.set(-0.05, player.yaw, 0);
+  } else if (G.state === 'title' || G.state === 'menu' || (G.state === 'loadout' && G.loFrom === 'title')) {
     titleT += dt * 0.08;
     camera.position.set(Math.cos(titleT) * 30, 14, Math.sin(titleT) * 30); camera.lookAt(0, 2, 0);
     if (camera.fov !== 75) { camera.fov = 75; camera.updateProjectionMatrix(); }
@@ -709,6 +816,7 @@ function loop() {
 preview('ww2'); buildTitle(); $('loading').remove(); loop();
 window.AOE = {
   G, W, player, startGame, toTitle, showLoadout, renderer, input, god: (on = true) => (G.god = on),
+  startCampaign, showCampaign, showBriefing, campSkip: () => G.camp && G.camp.skip(), camp: () => G.camp && { phase: G.camp.phase, t: G.camp.t, deaths: G.camp.deaths, use: G.camp.use, obj: G.camp.obj, inBoat: G.camp.inBoat, boatZ: G.camp.boatZ, done: G.camp.done },
   enterVehicle: () => { if (G.vehicle) { player.pos.set(G.vehicle.pos.x + 3, 0, G.vehicle.pos.z); enterVehicle(); } }, exitVehicle: () => exitVehicle(),
   info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, pr: pixelRatio, world: G.world && G.world.drawInfo }),
 };

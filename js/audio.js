@@ -24,7 +24,7 @@ export function initAudio() {
   } catch (e) { ctx = null; }
 }
 
-export function setMuffled(on) { if (filter) filter.frequency.value = on ? 2600 : 18000; }
+export function setMuffled(on, f = 2600) { if (filter) filter.frequency.setTargetAtTime(on ? f : 18000, ctx.currentTime, on ? 0.02 : 0.25); }
 
 function env(g, t, peak, decay, attack = 0.002) {
   g.gain.setValueAtTime(0.0001, t);
@@ -163,4 +163,37 @@ export function engine(on, throttle = 0, hover = false) {
     eng.o.frequency.setTargetAtTime((eng.hover ? 110 : 38) + k * (eng.hover ? 90 : 34), ctx.currentTime, 0.15);
     eng.g.gain.setTargetAtTime(0.1 + k * 0.12, ctx.currentTime, 0.15);
   }
+}
+
+// ---------- v3: campaign sounds
+let lastMG = 0, lastCrack = 0;
+export function playMG(dist = 40) {
+  if (!ctx) return; const now = performance.now(); if (now - lastMG < 55) return; lastMG = now;
+  const t = ctx.currentTime, out = bus(Math.max(0.06, 0.42 - dist * 0.0035), 2400);
+  noise(t, 0.07, 'bandpass', 1500, 0.9, out, 0.9); tone(t, 'sine', 140, 60, 0.07, 0.6, out);
+}
+export function playCrack() {
+  if (!ctx) return; const now = performance.now(); if (now - lastCrack < 90) return; lastCrack = now;
+  const t = ctx.currentTime; noise(t, 0.05, 'highpass', 3500, 0.35, master, 0.8); tone(t, 'sawtooth', 1800 + Math.random() * 800, 600, 0.06, 0.04);
+}
+export function playRicochet() { if (!ctx) return; const t = ctx.currentTime; const f = 2400 + Math.random() * 1500; tone(t, 'triangle', f, f * 0.55, 0.22, 0.12); noise(t, 0.04, 'highpass', 5000, 0.25); }
+export function playSplash(dist = 20) {
+  if (!ctx) return; const t = ctx.currentTime, out = bus(Math.max(0.12, 0.9 - dist * 0.012));
+  noise(t, 1.1, 'lowpass', 2600, 0.9, out, 0.6, 300); tone(t, 'sine', 90, 35, 0.5, 0.6, out);
+}
+export function playWhistle(dur = 1.3) { if (!ctx) return; const t = ctx.currentTime; tone(t, 'sine', 1500, 380, dur, 0.09, master, 0.25); }
+export function playRadio() { if (!ctx) return; const t = ctx.currentTime; noise(t, 0.12, 'bandpass', 2200, 0.25, master, 2); tone(t + 0.02, 'square', 1250, 1250, 0.07, 0.04); }
+export function playSplosh() { if (!ctx) return; const t = ctx.currentTime; noise(t, 0.4, 'lowpass', 900, 0.6, master, 0.7, 200); }
+// looping surf / distant battle bed
+let amb = null;
+export function ambience(on) {
+  if (!ctx) return;
+  if (on && !amb) {
+    const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
+    const g = ctx.createGain(); g.gain.value = 0.0; s.connect(f); f.connect(g); g.connect(master); s.start();
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.13; const lg = ctx.createGain(); lg.gain.value = 0.05; lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    g.gain.setTargetAtTime(0.11, ctx.currentTime, 0.8);
+    amb = { s, g, lfo };
+  } else if (!on && amb) { const a = amb; amb = null; a.g.gain.setTargetAtTime(0, ctx.currentTime, 0.2); a.s.stop(ctx.currentTime + 0.8); a.lfo.stop(ctx.currentTime + 0.8); }
 }

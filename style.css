@@ -187,3 +187,80 @@ body.touchdev #nades { justify-content: flex-start; }
   .chips { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .stat { margin: 1px 0; } .lo-btn.big { min-height: 44px; }
 }
+
+/* ---------- v3: title modes, campaign, briefing, mission complete */
+#modes { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 10px 0 4px; }
+.mode { flex: 1 1 260px; max-width: 380px; min-height: 120px; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; padding: 14px 16px;
+  border-radius: 12px; border: 1px solid rgba(255,255,255,.22); color: #fff; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.45); transition: transform .12s, border-color .12s; }
+.mode:hover, .mode:focus-visible { transform: translateY(-3px); border-color: #f2d48a; outline: none; }
+.mode small { font-size: 12px; letter-spacing: .35em; color: #f2d48a; font-weight: 800; }
+.mode b { font-size: 20px; } .mode i { font-style: normal; font-size: 12px; opacity: .85; } .mode em { font-style: normal; font-size: 11px; color: #f2d48a; margin-top: auto; }
+.mode-camp { background: linear-gradient(160deg, #5d6a6e, #1f2629); }
+.mode-surv { background: linear-gradient(160deg, #6b5d3c, #2e2a1e); }
+#surv { display: none; } #title.surv #surv { display: block; } #title.surv #modes { display: none; }
+.linkbtn { background: none; border: 1px solid #555; color: #ddd; border-radius: 6px; padding: 4px 10px; margin-right: 10px; cursor: pointer; letter-spacing: .1em; }
+.c-head { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; text-align: left; } .c-head h2 { margin: 0; } .c-head .sub { margin: 2px 0 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.mtile { text-align: left; min-height: 92px; padding: 10px; border-radius: 10px; border: 1px solid #3a3f46; background: rgba(20,22,26,.85); color: #ddd; display: flex; flex-direction: column; gap: 2px; }
+.mtile small { font-size: 10px; letter-spacing: .15em; color: #9a9; text-transform: uppercase; } .mtile b { font-size: 15px; } .mtile i { font-style: normal; font-size: 11px; color: #aab; }
+.mtile span { margin-top: auto; font-size: 11px; color: #888; }
+.mtile.play { grid-column: span 2; background: linear-gradient(160deg, #5d6a6e, #1f2629); border-color: #f2d48a; color: #fff; cursor: pointer; font: inherit; }
+.mtile.play b { font-size: 20px; } .mtile.play span { color: #f2d48a; font-weight: 800; }
+.mtile.locked { opacity: .55; filter: grayscale(.8); }
+.tiles.small .mtile { min-height: 64px; padding: 7px 9px; } .tiles.small .mtile b { font-size: 13px; }
+#briefing { background: rgba(6,8,10,.82); align-items: stretch; }
+.brief { width: min(1100px, 100%); margin: auto; display: grid; grid-template-columns: 1fr minmax(220px, 300px); gap: 14px; }
+.b-main { text-align: left; background: rgba(14,16,20,.75); border: 1px solid #3a3f46; border-radius: 10px; padding: 14px 18px; }
+.b-date { margin: 0; color: #f2d48a; letter-spacing: .3em; font-size: 12px; font-weight: 800; animation: fadein 1s both; }
+.b-main h2 { margin: 4px 0 2px; font-size: clamp(20px, 3vw, 30px); animation: fadein 1s .2s both; }
+.b-loc { margin: 0 0 8px; color: #aab; font-size: 12px; } .b-crawl { font-size: 13px; line-height: 1.5; margin: 0 0 8px; color: #ddd; animation: fadein 1.4s .5s both; }
+.b-obj { margin: 0 0 8px; padding-left: 20px; font-size: 12.5px; line-height: 1.55; color: #e8e6e0; }
+#brief-radio div { font-size: 12px; color: #c8e0c0; font-family: ui-monospace, Menlo, monospace; margin: 3px 0; opacity: 0; animation: fadein .6s both; }
+#brief-radio b { color: #9fd08a; }
+@keyframes fadein { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
+.b-side { display: flex; flex-direction: column; gap: 8px; background: rgba(14,16,20,.75); border: 1px solid #3a3f46; border-radius: 10px; padding: 12px; }
+.b-side h4 { margin: 0; font-size: 11px; letter-spacing: .25em; color: #f2d48a; }
+.chips.one { grid-template-columns: 1fr; margin: 0; }
+.b-kit { font-size: 11.5px; color: #aab; margin: 0; line-height: 1.5; }
+.b-side .lo-btn.big { margin-top: auto; }
+#mission .panel { max-width: 860px; background: rgba(14,16,20,.86); border: 1px solid #3a3f46; border-radius: 12px; padding: 16px 18px; }
+h2.win { color: #f2d48a; font-size: clamp(24px, 4vw, 36px); margin: 0 0 2px; }
+#mission-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0; }
+#mission-stats div { background: rgba(255,255,255,.05); border-radius: 6px; padding: 8px; font-size: 11px; color: #aaa; } #mission-stats b { display: block; font-size: 24px; color: #fff; }
+.memorial { font-size: 12px; color: #c8c4b8; font-style: italic; margin: 6px auto 10px; max-width: 640px; }
+h4.soon { margin: 4px 0 6px; font-size: 11px; letter-spacing: .3em; color: #f2d48a; }
+.m-btns { display: flex; gap: 8px; margin-top: 12px; } .m-btns .lo-btn { flex: 1; } .m-btns .lo-btn.big { margin: 0; width: auto; flex: 1.4; }
+/* campaign HUD */
+body.campaign #topbar { display: none; }
+#objective { position: absolute; top: max(8px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); max-width: min(560px, 60vw); background: rgba(0,0,0,.45); padding: 5px 14px; border-radius: 6px; font-size: 13px; text-align: center; display: none; border-left: 3px solid #f2d48a; }
+body.campaign #objective { display: block; }
+#objective i { font-style: normal; color: #f2d48a; font-size: 10px; letter-spacing: .25em; margin-right: 6px; } #objective em { font-style: normal; color: #ff9a8a; margin-left: 6px; }
+#objective.flash { animation: objf 1.2s; } @keyframes objf { 0%, 40% { background: rgba(160,120,40,.7) } 100% { background: rgba(0,0,0,.45) } }
+#objmarker { position: absolute; left: 0; top: 0; display: none; pointer-events: none; }
+#objmarker i { position: absolute; left: -8px; top: -8px; width: 16px; height: 16px; border: 2px solid #f2d48a; transform: rotate(45deg); background: rgba(242,212,138,.25); }
+#objmarker span { position: absolute; left: -60px; width: 120px; top: 12px; text-align: center; font-size: 11px; color: #f2d48a; letter-spacing: .08em; }
+#subs { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); max-width: min(720px, 76vw); background: rgba(0,0,0,.6); padding: 6px 14px; border-radius: 6px; font-size: 15px; font-weight: 600; text-align: center; opacity: 0; transition: opacity .3s; line-height: 1.35; }
+#subs.on { opacity: 1; } #subs b { color: #f2d48a; } #subs b.radio { color: #9fd08a; }
+#underwater { position: absolute; inset: 0; opacity: 0; transition: opacity .25s; background: radial-gradient(ellipse at 50% 30%, rgba(60,100,100,.55), rgba(10,30,34,.95)); }
+#fade { position: absolute; inset: 0; background: rgba(0,0,0,.82); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; opacity: 0; transition: opacity .6s; letter-spacing: .2em; }
+#fade.on { opacity: 1; } #fade b { font-size: 26px; color: #ff8a7a; } #fade span { font-size: 13px; color: #ccc; }
+#b-crouch { width: 48px; height: 48px; right: calc(max(16px, env(safe-area-inset-right)) + 4px); bottom: 36px; font-size: 15px; }
+body.campaign #b-enter { width: 96px; }
+body.inveh #b-crouch { display: none; }
+body.touchdev #subs { bottom: 34px; font-size: 13px; max-width: 58vw; }
+body.touchdev #objective { font-size: 11.5px; max-width: 46vw; }
+@media (max-height: 430px) {
+  .mode { min-height: 92px; padding: 10px 12px; } .mode b { font-size: 16px; }
+  .brief { grid-template-columns: 1fr 230px; gap: 8px; } .b-main { padding: 8px 12px; } .b-crawl { font-size: 12px; margin-bottom: 4px; } .b-obj { font-size: 11.5px; line-height: 1.4; margin-bottom: 4px; }
+  .b-loc { margin-bottom: 4px; } #brief-radio div { font-size: 11px; margin: 1px 0; } .chip { min-height: 40px; padding: 4px 8px; }
+  .mtile { min-height: 74px; } #mission .panel { padding: 10px 12px; } #mission-stats b { font-size: 20px; } .memorial { margin: 4px auto 6px; }
+}
+body.touchdev.campaign #killfeed { top: max(40px, calc(env(safe-area-inset-top) + 34px)); font-size: 10.5px; }
+body.touchdev.campaign #killfeed div:nth-child(n+4) { display: none; }
+#mission, #campaign { align-items: flex-start; } #mission .panel, #campaign .panel { margin: auto; }
+@media (max-height: 430px) {
+  h2.win { font-size: 22px; } #mission .sub { margin: 0 0 4px; } #mission-stats { margin: 4px 0; gap: 6px; } #mission-stats div { padding: 4px; } #mission-stats b { font-size: 18px; }
+  .memorial { font-size: 11px; margin: 2px auto 4px; } h4.soon { margin: 2px 0 4px; }
+  .tiles.small { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 5px; } .tiles.small .mtile { min-height: 0; padding: 4px 7px; } .tiles.small .mtile i { display: none; }
+  .m-btns { margin-top: 8px; } .m-btns .lo-btn { min-height: 40px; }
+}
