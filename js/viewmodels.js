@@ -19,7 +19,9 @@ const PAL = {
   glass: L(0x223344),
 };
 
+let ARMS_ON = true;
 function arms(g, sleeve, gripZ = 0.1, foreZ = -0.28, foreY = -0.02) {
+  if (!ARMS_ON) return;
   // right hand on grip, left hand on foregrip
   B(g, 0.07, 0.09, 0.1, PAL.glove, 0.0, -0.08, gripZ);
   B(g, 0.07, 0.07, 0.4, sleeve, 0.05, -0.15, gripZ + 0.24, 0.4, -0.15, 0);
@@ -27,8 +29,62 @@ function arms(g, sleeve, gripZ = 0.1, foreZ = -0.28, foreY = -0.02) {
   B(g, 0.065, 0.065, 0.42, sleeve, -0.12, foreY - 0.14, foreZ + 0.2, 0.35, 0.5, 0);
 }
 
-export function buildViewmodel(model) {
+function matOf(k) { return PAL[k] || L(k); }
+
+// Parametric rifle/SMG/LMG builder used by the expanded weapon pools.
+function genGun(g, p) {
+  const body = matOf(p.col || 'black'), fur = matOf(p.fur || 'black');
+  const rl = p.len || 0.34, hg = p.hg || 0.2, bar = p.bar || 0.2, bw = p.bw || 1;
+  B(g, 0.065, 0.1, rl, body, 0, 0.02, -0.02);
+  const front = -0.02 - rl / 2;
+  if (hg > 0.01) B(g, 0.07, 0.075, hg, fur, 0, 0.012, front - hg / 2);
+  if (p.jacket) { C(g, 0.03, hg + 0.1, PAL.steel, 0, 0.025, front - hg / 2 - 0.03, 6); }
+  const hgEnd = front - hg;
+  C(g, 0.014 * bw, bar, PAL.steel, 0, 0.025, hgEnd - bar / 2 + 0.03);
+  const mz = hgEnd - bar + 0.03;
+  switch (p.stock) {
+    case 'wood': B(g, 0.06, 0.12, 0.28, fur, 0, -0.03, 0.27, 0.12); break;
+    case 'black': B(g, 0.055, 0.1, 0.26, PAL.black, 0, -0.01, 0.28); break;
+    case 'skel': B(g, 0.02, 0.02, 0.26, PAL.dark, 0, 0.03, 0.27); B(g, 0.02, 0.02, 0.24, PAL.dark, 0, -0.04, 0.26); B(g, 0.05, 0.1, 0.03, PAL.dark, 0, -0.005, 0.4); break;
+    case 'tube': C(g, 0.016, 0.22, PAL.dark, 0, 0.02, 0.26); B(g, 0.05, 0.11, 0.06, PAL.black, 0, -0.01, 0.38); break;
+  }
+  let mag = null;
+  switch (p.mag) {
+    case 'straight': mag = B(g, 0.05, 0.17, 0.07, PAL.dark, 0, -0.1, -0.08, 0.1); break;
+    case 'curved': mag = B(g, 0.05, 0.19, 0.075, PAL.dark, 0, -0.11, -0.1, 0.32); break;
+    case 'drum': { mag = new THREE.Mesh(cylGeo(0.09, 0.09, 0.07, 10), PAL.black); mag.rotation.y = Math.PI / 2; mag.position.set(0, -0.1, -0.06); g.add(mag); break; }
+    case 'box': mag = B(g, 0.11, 0.12, 0.13, PAL.olive, -0.07, -0.06, -0.06); break;
+    case 'grip': mag = B(g, 0.04, 0.12, 0.05, PAL.dark, 0, -0.17, 0.06, -0.1); break;
+  }
+  B(g, 0.045, 0.12, 0.05, p.mag === 'grip' ? body : fur, 0, -0.08, p.mag === 'grip' ? 0.06 : 0.1, p.mag === 'grip' ? -0.1 : -0.25);
+  if (p.handle) B(g, 0.03, 0.05, 0.16, body, 0, 0.1, -0.02);
+  if (p.rail) B(g, 0.03, 0.02, rl + hg * 0.9, PAL.dark, 0, 0.08, -0.02 - hg * 0.45);
+  else B(g, 0.012, 0.04, 0.012, PAL.steel, 0, 0.06, mz + 0.03);
+  const glow = [];
+  if (p.glow) { glow.push(B(g, 0.067, 0.012, rl * 0.8, E(p.glow), 0, 0.0, -0.02)); if (hg > 0.05) glow.push(B(g, 0.072, 0.01, hg * 0.7, E(p.glow), 0, 0.03, front - hg / 2)); }
+  return { mag, mz, glow, gripZ: 0.1, foreZ: Math.max(front - hg * 0.55, -0.4) };
+}
+
+function pistol(g, p) {
+  const body = matOf(p.col || 'black'), fur = matOf(p.fur || 'black'), k = p.big ? 1.25 : 1;
+  B(g, 0.05 * k, 0.06 * k, 0.24 * k, body, 0, 0.045, -0.07);
+  B(g, 0.045 * k, 0.04, 0.2 * k, fur === body ? PAL.dark : body, 0, 0.0, -0.06);
+  B(g, 0.045 * k, 0.14, 0.065, fur, 0, -0.07, 0.03, -0.22);
+  const mag = B(g, 0.035, 0.1, 0.045, PAL.dark, 0, -0.12, 0.045, -0.22);
+  if (p.toggle) C(g, 0.016, 0.06, PAL.steel, 0, 0.085, 0.0, 6);
+  B(g, 0.01, 0.02, 0.01, PAL.steel, 0, 0.083, -0.18 * k);
+  const glow = []; if (p.glow) glow.push(B(g, 0.052 * k, 0.01, 0.18 * k, E(p.glow), 0, 0.02, -0.07));
+  // hands: two-handed grip close together
+  if (ARMS_ON) B(g, 0.07, 0.09, 0.09, PAL.glove, 0.0, -0.08, 0.04);
+  if (ARMS_ON) { B(g, 0.06, 0.08, 0.09, PAL.glove, -0.045, -0.07, 0.02);
+  B(g, 0.07, 0.07, 0.4, PAL.sleeveDark, 0.05, -0.15, 0.27, 0.4, -0.12, 0);
+  B(g, 0.065, 0.065, 0.4, PAL.sleeveDark, -0.1, -0.14, 0.24, 0.4, 0.3, 0); }
+  return { mag, mz: -0.07 - 0.12 * k - 0.01, glow };
+}
+
+export function buildViewmodel(model, gen = null, opts = {}) {
   const g = new THREE.Group();
+  ARMS_ON = opts.arms !== false;
   const muzzle = new THREE.Object3D();
   let mag = null;
   let glow = [];
@@ -189,6 +245,15 @@ export function buildViewmodel(model) {
       arms(g, PAL.sleeveSpace, 0.13, -0.3, 0.0);
       break;
     }
+    case 'gen': {
+      const r = genGun(g, gen || {}); mag = r.mag; glow = r.glow; muzzle.position.set(0, 0.025, r.mz);
+      if (opts.arms !== false) arms(g, gen && gen.glow ? PAL.sleeveDark : PAL.sleeve, r.gripZ, r.foreZ);
+      break;
+    }
+    case 'pistol': {
+      const r = pistol(g, gen || {}); mag = r.mag; glow = r.glow; muzzle.position.set(0, 0.045, r.mz);
+      break;
+    }
     case 'missile': {
       const o = E(0xffa040);
       B(g, 0.16, 0.16, 0.6, PAL.white, 0.0, 0.04, -0.15);
@@ -206,7 +271,8 @@ export function buildViewmodel(model) {
   // highest point of the weapon (used to align aim-down-sights)
   let top = 0; g.updateMatrixWorld(true);
   const bb = new THREE.Box3(); g.traverse(o => { if (o.isMesh && o.material !== PAL.glove && !String(o.material.uuid).startsWith('x')) { bb.setFromObject(o); if (Math.abs(o.position.x) < 0.06) top = Math.max(top, bb.max.y); } });
-  return { group: g, muzzle, top, mag, magHome: mag ? mag.position.clone() : null, glow };
+  const attG = new THREE.Group(); g.add(attG);
+  return { group: g, muzzle, top, attG, muzzleHome: muzzle.position.clone(), model, mag, magHome: mag ? mag.position.clone() : null, glow };
 }
 
 // Muzzle flash: two crossed additive planes
@@ -217,4 +283,37 @@ export function buildFlash(color) {
   const a = new THREE.Mesh(p, m); const b = new THREE.Mesh(p, m); b.rotation.y = Math.PI / 2; const c = new THREE.Mesh(p, m); c.rotation.x = Math.PI / 2;
   g.add(a, b, c); g.visible = false;
   return g;
+}
+
+// Visible attachment meshes. Returns the optic center height (for ADS alignment) or null.
+export function applyAttachments(vm, att, sci) {
+  const a = vm.attG; while (a.children.length) a.remove(a.children[0]);
+  vm.muzzle.position.copy(vm.muzzleHome);
+  if (vm.mag) { vm.mag.scale.set(1, 1, 1); }
+  const top = vm.top, mzZ = vm.muzzleHome.z, mzY = vm.muzzleHome.y;
+  const metal = sci ? PAL.grey : PAL.black, lens = E(sci ? 0x40e0ff : 0xff2020);
+  let opticY = null;
+  const isP = vm.model === 'pistol';
+  const oz = isP ? -0.06 : -0.04;
+  switch (att.optic) {
+    case 'dot': B(a, 0.04, 0.045, 0.06, metal, 0, top + 0.022, oz); B(a, 0.03, 0.028, 0.004, PAL.glass, 0, top + 0.03, oz - 0.031); B(a, 0.006, 0.006, 0.004, lens, 0, top + 0.03, oz - 0.034); opticY = top + 0.03; break;
+    case 'holo': B(a, 0.055, 0.012, 0.09, metal, 0, top + 0.006, oz); B(a, 0.006, 0.05, 0.006, metal, -0.025, top + 0.035, oz - 0.04); B(a, 0.006, 0.05, 0.006, metal, 0.025, top + 0.035, oz - 0.04); B(a, 0.056, 0.006, 0.006, metal, 0, top + 0.06, oz - 0.04); B(a, 0.044, 0.04, 0.003, E(sci ? 0x104050 : 0x203018), 0, top + 0.035, oz - 0.04); B(a, 0.006, 0.006, 0.004, lens, 0, top + 0.035, oz - 0.043); opticY = top + 0.035; break;
+    case '2x': C(a, 0.018, 0.16, PAL.black, 0, top + 0.03, oz, 8); B(a, 0.015, 0.025, 0.02, PAL.black, 0, top + 0.012, oz); opticY = top + 0.03; break;
+    case '4x': C(a, 0.024, 0.2, metal, 0, top + 0.04, oz, 8); C(a, 0.032, 0.05, metal, 0, top + 0.04, oz - 0.12, 8); B(a, 0.02, 0.03, 0.04, metal, 0, top + 0.015, oz); opticY = top + 0.04; break;
+    case '8x': C(a, 0.028, 0.28, metal, 0, top + 0.045, oz + 0.02, 8); C(a, 0.04, 0.07, metal, 0, top + 0.045, oz - 0.14, 8); B(a, 0.02, 0.035, 0.05, metal, 0, top + 0.017, oz); opticY = top + 0.045; break;
+  }
+  switch (att.muzzle) {
+    case 'supp': C(a, isP ? 0.02 : 0.026, isP ? 0.12 : 0.17, PAL.dark, 0, mzY, mzZ - (isP ? 0.06 : 0.085), 8); vm.muzzle.position.z = mzZ - (isP ? 0.12 : 0.17); break;
+    case 'comp': B(a, 0.04, 0.04, 0.06, metal, 0, mzY, mzZ - 0.03); B(a, 0.042, 0.01, 0.01, PAL.dark, 0, mzY + 0.02, mzZ - 0.03); vm.muzzle.position.z = mzZ - 0.06; break;
+    case 'flash': C(a, 0.02, 0.06, PAL.dark, 0, mzY, mzZ - 0.03, 5); vm.muzzle.position.z = mzZ - 0.06; break;
+  }
+  const uz = isP ? -0.12 : Math.max(mzZ * 0.55, -0.42);
+  switch (att.under) {
+    case 'grip': B(a, 0.035, 0.11, 0.04, metal, 0, -0.07, uz); break;
+    case 'bipod': B(a, 0.012, 0.012, 0.2, metal, 0.02, -0.035, uz - 0.08, 0.15); B(a, 0.012, 0.012, 0.2, metal, -0.02, -0.035, uz - 0.08, 0.15); B(a, 0.04, 0.025, 0.03, metal, 0, -0.03, uz + 0.02); break;
+    case 'laser': B(a, 0.03, 0.03, 0.07, metal, isP ? 0 : 0.045, isP ? -0.03 : 0.0, uz); B(a, 0.012, 0.012, 0.004, E(0xff1010), isP ? 0 : 0.045, isP ? -0.03 : 0.0, uz - 0.037); break;
+  }
+  if (vm.mag && att.mag === 'ext') vm.mag.scale.set(1, 1.5, 1.1);
+  if (vm.mag && att.mag === 'fast') { const m2 = vm.mag.clone(); m2.position.x += 0.055; a.add(m2); const t = B(a, 0.11, 0.02, 0.05, E(0x3a3a3a), vm.mag.position.x + 0.027, vm.mag.position.y, vm.mag.position.z, vm.mag.rotation.x); t.material = PAL.olive; }
+  return opticY;
 }

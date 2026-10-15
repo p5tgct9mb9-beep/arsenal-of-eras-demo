@@ -41,7 +41,7 @@ export class Enemy {
     this.speed = 2.4 + Math.random() * 1.0 + Math.min(wave, 10) * 0.08;
     this.pref = 9 + Math.random() * 14; this.strafe = Math.random() < 0.5 ? 1 : -1; this.strafeT = 1 + Math.random() * 2;
     this.shootT = 1.2 + Math.random() * 1.5; this.walk = Math.random() * 6; this.deadT = 0; this.hitT = 0; this.flashT = 0;
-    this.detour = 0; this.detourDir = 1; this.active = true; this.alive = true; this.vy = 0;
+    this.detour = 0; this.detourDir = 1; this.active = true; this.alive = true; this.vy = 0; this.stunT = 0; this.head.rotation.set(0, 0, 0);
   }
   // returns distance along ray or Infinity; sets this._head
   rayHit(o, d, maxT) {
@@ -67,7 +67,14 @@ export class Enemy {
       if (this.deadT > 3.2) { this.active = false; this.group.visible = false; }
       return;
     }
-    const P = g.player.pos;
+    const P = g.tgtPos;
+    if (this.stunT > 0) {
+      this.stunT -= dt; this.head.rotation.z = Math.sin(this.stunT * 9) * 0.35;
+      this.group.rotation.y += Math.sin(this.stunT * 5) * dt * 3;
+      this.pos.x += Math.sin(this.stunT * 3 + this.walk) * dt * 0.8; collide(g.world.colliders, this.pos, 0.38, 0);
+      if (this.stunT <= 0) this.head.rotation.z = 0;
+      return;
+    }
     const dx = P.x - this.pos.x, dz = P.z - this.pos.z, dist = Math.hypot(dx, dz) || 0.001;
     const fx = dx / dist, fz = dz / dist;
     this.group.rotation.y = Math.atan2(dx, dz);
@@ -87,21 +94,22 @@ export class Enemy {
       if (moved < this.speed * dt * 0.3 && this.detour <= 0) { this.detour = 0.8 + Math.random() * 0.8; this.detourDir = Math.random() < 0.5 ? 1 : -1; }
       this.walk += moved * 3.2;
     }
+    if (g.vehicle && g.vehicle.alive !== undefined) { const v = g.vehicle, vx = this.pos.x - v.pos.x, vz = this.pos.z - v.pos.z, vd = Math.hypot(vx, vz); if (vd < 2.6 && vd > 0.01) { this.pos.x = v.pos.x + vx / vd * 2.6; this.pos.z = v.pos.z + vz / vd * 2.6; } }
     const sw = Math.sin(this.walk) * 0.6; this.hipL.rotation.x = sw; this.hipR.rotation.x = -sw;
     // shooting
     this.shootT -= dt;
     if (this.shootT <= 0 && g.player.alive) {
-      if (dist > 48) { this.shootT = 0.5; return; }
-      const o = new THREE.Vector3(this.pos.x, 1.45, this.pos.z), tgt = g.player.eye.clone().add(new THREE.Vector3(0, -0.25, 0));
+      if (dist > (g.inVeh ? 60 : 48)) { this.shootT = 0.5; return; }
+      const o = new THREE.Vector3(this.pos.x, 1.45, this.pos.z), tgt = g.tgtEye.clone().add(new THREE.Vector3(0, -0.25, 0));
       const d = tgt.clone().sub(o); const L = d.length(); d.divideScalar(L);
-      if (rayWorld(g.world.colliders, o, d, L) < L - 0.3) { this.shootT = 0.35 + Math.random() * 0.4; return; }
+      if (rayWorld(g.world.colliders, o, d, L) < L - (g.inVeh ? 2.5 : 0.3) || g.grenades.blocks(o, tgt)) { this.shootT = 0.35 + Math.random() * 0.4; return; }
       let chance = Math.max(0.12, Math.min(0.68, 0.78 - dist * 0.013));
-      if (g.player.moving) chance *= 0.65; if (g.player.crouchy) chance *= 0.8;
+      if (g.inVeh) chance = Math.min(0.85, chance * 1.4); else if (g.player.moving) chance *= 0.65;
       chance *= Math.min(1.35, 1 + (g.wave - 1) * 0.03);
       const hit = Math.random() < chance;
       const muzzle = this.flash.getWorldPosition(new THREE.Vector3());
       const end = tgt.clone(); if (!hit) end.add(new THREE.Vector3((Math.random() - 0.5) * 2.4, (Math.random() - 0.3) * 1.4, (Math.random() - 0.5) * 2.4));
-      else end.add(new THREE.Vector3(0, -0.3, 0));
+      else end.add(new THREE.Vector3(0, g.inVeh ? -0.6 : -0.3, 0));
       g.onEnemyShot(this, muzzle, end, hit, dist);
       this.flash.visible = true; this.flash.rotation.z = Math.random() * 3; this.flashT = 0.06;
       this.shootT = (0.9 + Math.random() * 1.1) * Math.max(0.55, 1 - (g.wave - 1) * 0.04);

@@ -1,7 +1,7 @@
 // Unified input: desktop (WASD + pointer lock mouse) and mobile touch (virtual stick + drag look + buttons).
 export const input = {
   mx: 0, my: 0, lookX: 0, lookY: 0, fire: false, ads: false, sprint: false,
-  jump: false, reload: false, swap: null, pause: false, touch: false,
+  jump: false, reload: false, swap: null, pause: false, touch: false, nade: false, tac: false, enter: false,
   keys: new Set(),
 };
 
@@ -19,6 +19,7 @@ export function initInput(cv, playingFn, pauseFn) {
     if (e.code === 'Space') { input.jump = true; e.preventDefault(); }
     if (e.code === 'Digit1') input.swap = 0; if (e.code === 'Digit2') input.swap = 1; if (e.code === 'Digit3') input.swap = 2;
     if (e.code === 'KeyQ') input.swap = 'next';
+    if (e.code === 'KeyG') input.nade = true; if (e.code === 'KeyT' || e.code === 'KeyF') input.tac = true; if (e.code === 'KeyE') input.enter = true;
     if (e.code === 'KeyP') onPauseReq();
   });
   addEventListener('keyup', e => input.keys.delete(e.code));
@@ -51,6 +52,9 @@ export function initInput(cv, playingFn, pauseFn) {
         else if (b === 'reload') input.reload = true;
         else if (b === 'swap') input.swap = 'next';
         else if (b === 'jump') input.jump = true;
+        else if (b === 'nade') input.nade = true;
+        else if (b === 'tac') input.tac = true;
+        else if (b === 'enter') input.enter = true;
         else if (b === 'pause') onPauseReq();
         continue;
       }
@@ -99,4 +103,4 @@ export function pollMove() {
   if (input.touch) document.getElementById('b-ads').classList.toggle('on', input.ads);
 }
 
-export function resetInput() { input.fire = false; input.ads = false; input.jump = false; input.reload = false; input.swap = null; input.lookX = input.lookY = 0; input.keys.clear(); joy.id = null; joy.x = joy.y = 0; lookId = null; fireId = null; document.querySelectorAll('#touch .on').forEach(e => e.classList.remove('on')); }
+export function resetInput() { input.nade = input.tac = input.enter = false; input.fire = false; input.ads = false; input.jump = false; input.reload = false; input.swap = null; input.lookX = input.lookY = 0; input.keys.clear(); joy.id = null; joy.x = joy.y = 0; lookId = null; fireId = null; document.querySelectorAll('#touch .on').forEach(e => e.classList.remove('on')); }

@@ -125,3 +125,65 @@ body.touchdev #killfeed { font-size: 11px; top: max(8px, env(safe-area-inset-top
 @keyframes rot { 0%, 20% { transform: rotate(0) } 60%, 100% { transform: rotate(-90deg) } }
 @media (orientation: portrait) { body.touchdev #rotate { display: flex; } }
 #loading { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: #0b0d10; letter-spacing: .3em; padding: 20px; text-align: center; }
+
+/* ---------- v2: grenades / vehicle HUD */
+#flashfx { position: absolute; inset: 0; background: #fff; opacity: 0; }
+#prompt { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); background: rgba(0,0,0,.55); padding: 6px 14px; border-radius: 6px; font-size: 14px; letter-spacing: .08em; display: none; color: #f2d48a; }
+#prompt.on { display: block; }
+#nades { display: flex; gap: 10px; justify-content: flex-end; font-size: 13px; margin-top: 3px; }
+#ammo-veh { display: none; font-size: 15px; color: #f2d48a; }
+body.inveh #ammo .nums, body.inveh #slots, body.inveh #nades, body.inveh #reloadbar { display: none; }
+body.inveh #ammo-veh { display: block; }
+body.inveh #crosshair i { background: #ffb040; }
+#b-nade, #b-tac { width: 50px; height: 50px; font-size: 18px; flex-direction: column; line-height: 1; }
+#b-nade small, #b-tac small { font-size: 10px; margin-top: 2px; }
+.tbtn.empty { opacity: .35; }
+#b-nade { right: calc(max(16px, env(safe-area-inset-right)) + 186px); bottom: 172px; }
+#b-tac { right: calc(max(16px, env(safe-area-inset-right)) + 244px); bottom: 136px; }
+#b-enter { display: none; width: 86px; height: 42px; border-radius: 21px; right: calc(max(16px, env(safe-area-inset-right)) + 148px); bottom: 232px; font-size: 13px; background: rgba(242,180,60,.45); border-color: #f2d48a; }
+body.nearveh #b-enter, body.inveh #b-enter { display: flex; }
+body.inveh #b-ads, body.inveh #b-reload, body.inveh #b-swap, body.inveh #b-jump, body.inveh #b-nade, body.inveh #b-tac { display: none; }
+body.inveh #b-enter { right: calc(max(16px, env(safe-area-inset-right)) + 10px); bottom: 180px; }
+body.inveh #b-ads { display: flex; }
+body.touchdev #nades { justify-content: flex-start; }
+
+/* ---------- v2: loadout screen */
+#loadout { align-items: stretch; padding-top: max(6px, env(safe-area-inset-top)); padding-bottom: max(6px, env(safe-area-inset-bottom)); background: none; touch-action: none; }
+.lo { width: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.lo-head { display: flex; align-items: center; gap: 12px; padding: 6px 10px; margin-bottom: 6px; background: rgba(8,10,12,.85); border-radius: 10px; }
+.lo-head b { color: #f2d48a; letter-spacing: .15em; font-size: 14px; }
+.lo-title { margin-left: auto; letter-spacing: .4em; color: #999; font-size: 12px; font-weight: 700; }
+.lo-btn { min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #555; background: #262a30; color: #eee; font-weight: 800; letter-spacing: .08em; cursor: pointer; }
+.lo-btn.big { background: #c99a3a; color: #1a1408; border-color: #f2d48a; width: 100%; min-height: 48px; font-size: 15px; margin-top: auto; }
+.lo-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(130px, 190px) 1fr minmax(200px, 280px); gap: 10px; }
+.lo-tabs, .lo-opts { overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; }
+.lo-tabs { display: flex; flex-direction: column; gap: 6px; }
+.tab { text-align: left; min-height: 52px; flex-shrink: 0; padding: 6px 10px; border-radius: 8px; border: 1px solid #3a3f46; background: rgba(30,34,40,.85); color: #ddd; cursor: pointer; display: flex; flex-direction: column; justify-content: center; }
+.tab small { font-size: 10px; letter-spacing: .2em; color: #9a9; text-transform: uppercase; }
+.tab b { font-size: 13px; }
+.tab.on { border-color: #f2d48a; background: rgba(90,70,30,.75); }
+.lo-opts { padding: 6px 8px; background: rgba(8,10,12,.82); border-radius: 10px; }
+.lo-tabs { padding: 6px; background: rgba(8,10,12,.82); border-radius: 10px; }
+.lo-opts h4 { margin: 4px 0 6px; font-size: 11px; letter-spacing: .25em; color: #f2d48a; text-transform: uppercase; }
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 10px; }
+.chip { text-align: left; min-height: 48px; padding: 6px 10px; border-radius: 8px; border: 1px solid #3a3f46; background: rgba(30,34,40,.85); color: #eee; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.chip b { font-size: 13px; } .chip i { font-style: normal; font-size: 10.5px; color: #aab; line-height: 1.3; }
+.chip.on { border-color: #f2d48a; background: rgba(110,84,30,.8); box-shadow: inset 0 0 0 1px #f2d48a; }
+.chip:hover { border-color: #888; }
+.lo-side { display: flex; flex-direction: column; gap: 0; min-height: 0; }
+#lo-wname, #lo-stats { background: rgba(8,10,12,.85); padding: 4px 10px; } #lo-wname { border-radius: 10px 10px 0 0; margin-top: 6px; padding-top: 8px; } #lo-stats { border-radius: 0 0 10px 10px; padding-bottom: 8px; margin-bottom: 6px; }
+#lo-preview { height: 120px; flex-shrink: 0; border-radius: 10px; outline: 1px solid #3a3f46; }
+#lo-wname b { font-size: 15px; } #lo-wname small { color: #9a9; font-size: 11px; }
+.stat { display: flex; align-items: center; gap: 8px; font-size: 11px; margin: 3px 0; }
+.stat span { width: 74px; color: #bbb; }
+.stat .bar { position: relative; flex: 1; height: 7px; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden; }
+.stat .bar i { position: absolute; top: 0; bottom: 0; left: 0; transition: width .2s, left .2s; }
+.stat .bar .cur { background: #e8e6e0; } .stat .bar .up { background: #5fd36a; } .stat .bar .down { background: #e34a3a; }
+.lo-side .nums { font-size: 10.5px; color: #aaa; margin: 2px 0; line-height: 1.35; }
+@media (max-height: 430px) {
+  .lo-head { padding: 0 0 4px; } .lo-btn { min-height: 40px; }
+  .lo-body { grid-template-columns: 128px 1fr 210px; gap: 8px; }
+  .tab { min-height: 46px; } #lo-preview { height: 70px; }
+  .chips { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .stat { margin: 1px 0; } .lo-btn.big { min-height: 44px; }
+}

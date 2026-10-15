@@ -130,3 +130,37 @@ export function playHorn(good) {
   const notes = good ? [440, 554, 659] : [330, 247];
   notes.forEach((n, i) => tone(t + i * 0.16, 'square', n, n, 0.22, 0.09, master, 0.01));
 }
+
+export function playThrow() { if (!ctx) return; const t = ctx.currentTime; noise(t, 0.25, 'bandpass', 900, 0.35, master, 1.2, 2500); }
+export function playBounce(v = 0.5) { if (!ctx) return; const t = ctx.currentTime; tone(t, 'triangle', 1700 + Math.random() * 600, 900, 0.06, 0.15 * v); noise(t, 0.03, 'highpass', 4000, 0.2 * v); }
+export function playPin() { if (!ctx) return; const t = ctx.currentTime; tone(t, 'square', 3200, 2800, 0.03, 0.05); noise(t + 0.08, 0.03, 'highpass', 5000, 0.2); }
+export function playFlashbang(dist = 5) {
+  if (!ctx) return; const t = ctx.currentTime, out = bus(Math.max(0.25, 1 - dist * 0.03));
+  noise(t, 0.5, 'highpass', 2500, 1.0, out, 0.5); tone(t, 'sine', 90, 40, 0.4, 0.8, out);
+  if (dist < 10) tone(t + 0.1, 'sine', 3800, 3700, 2.2, 0.06 * (1 - dist / 10), master, 0.05);
+}
+export function playSmoke() { if (!ctx) return; const t = ctx.currentTime; noise(t, 1.6, 'highpass', 1800, 0.35, master, 0.4, 4000); tone(t, 'sine', 140, 80, 0.1, 0.3); }
+export function playCannon(dist = 0) {
+  if (!ctx) return; const t = ctx.currentTime, out = bus(Math.max(0.3, 1 - dist * 0.015));
+  noise(t, 0.9, 'lowpass', 2200, 1.2, out, 0.7, 90); tone(t, 'sine', 65, 22, 0.8, 1.2, out); noise(t, 0.05, 'highpass', 3000, 0.6, out);
+}
+export function playClunk() { if (!ctx) return; const t = ctx.currentTime; tone(t, 'square', 180, 90, 0.12, 0.15); noise(t, 0.08, 'lowpass', 900, 0.4); }
+
+// continuous engine rumble for vehicles
+let eng = null;
+export function engine(on, throttle = 0, hover = false) {
+  if (!ctx) return;
+  if (on && !eng) {
+    const o = ctx.createOscillator(); o.type = hover ? 'triangle' : 'sawtooth';
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = hover ? 900 : 380;
+    const g = ctx.createGain(); g.gain.value = 0;
+    o.connect(f); f.connect(g); g.connect(master); o.start();
+    eng = { o, g, f, hover };
+  }
+  if (!on && eng) { const e = eng; eng = null; e.g.gain.setTargetAtTime(0, ctx.currentTime, 0.1); e.o.stop(ctx.currentTime + 0.5); return; }
+  if (eng) {
+    const k = Math.min(1, Math.abs(throttle));
+    eng.o.frequency.setTargetAtTime((eng.hover ? 110 : 38) + k * (eng.hover ? 90 : 34), ctx.currentTime, 0.15);
+    eng.g.gain.setTargetAtTime(0.1 + k * 0.12, ctx.currentTime, 0.15);
+  }
+}

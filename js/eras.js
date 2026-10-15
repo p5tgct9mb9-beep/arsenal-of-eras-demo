@@ -1,6 +1,8 @@
-// Era definitions: arena look, physics and 3-weapon loadouts.
-// spread = degrees of cone (hip), rpm = rounds per minute, reload = seconds.
-// sfx describes the WebAudio synth recipe used in audio.js.
+// Era definitions: arena look, physics, weapon pools (primaries + sidearms), grenades and vehicle.
+// spread = degrees of cone (hip), rpm = rounds per minute, reload = seconds, range = meters before damage falloff.
+// sfx describes the WebAudio synth recipe used in audio.js. model = bespoke viewmodel id, or 'gen'/'pistol' + gen params.
+
+const G = (f, decay, thump, gain) => ({ t: 'gun', f, decay, thump, gain });
 
 export const ERAS = {
   ww2: {
@@ -11,14 +13,22 @@ export const ERAS = {
     buildingColors: [0x8b7d6b, 0x9a8a73, 0x7a6552, 0x6f6458], windowColor: 0x2a241e,
     enemy: { body: 0x5c6150, legs: 0x4b4f40, head: 0x4a5040, skin: 0xc49a7a, accent: 0x2b2b25, visor: null },
     enemyName: 'Grenadier', enemyDmg: 9, tracer: 0xffd890,
-    weapons: [
-      { id: 'garand', name: 'M1 Garand', model: 'garand', kind: 'bullet', auto: false, rpm: 320, dmg: 58, mag: 8, reserve: 64, spread: 0.5, reload: 2.1, recoil: 0.035, zoom: 0.8, ping: true,
-        sfx: { t: 'gun', f: 2200, decay: 0.22, thump: 95, gain: 1.0 } },
-      { id: 'thompson', name: 'Thompson M1A1', model: 'thompson', kind: 'bullet', auto: true, rpm: 720, dmg: 21, mag: 30, reserve: 180, spread: 2.2, reload: 2.4, recoil: 0.012, zoom: 0.85,
-        sfx: { t: 'gun', f: 1400, decay: 0.12, thump: 120, gain: 0.75 } },
-      { id: 'mg42', name: 'MG 42', model: 'mg42', kind: 'bullet', auto: true, rpm: 1200, dmg: 24, mag: 75, reserve: 225, spread: 3.0, reload: 4.4, recoil: 0.011, zoom: 0.85, slow: 0.82,
-        sfx: { t: 'gun', f: 2600, decay: 0.09, thump: 100, gain: 0.7 } },
+    vehicle: { type: 'sherman', name: 'M4 Sherman', cannon: '75mm Gun', color: 0x4b5320, speed: 7, hp: 900, reload: 2.8 },
+    primaries: [
+      { id: 'garand', name: 'M1 Garand', cls: 'Semi-auto Rifle', model: 'garand', kind: 'bullet', auto: false, rpm: 320, dmg: 58, mag: 8, reserve: 64, spread: 0.5, reload: 2.1, recoil: 0.035, zoom: 0.8, range: 70, ping: true, sfx: G(2200, 0.22, 95, 1.0) },
+      { id: 'thompson', name: 'Thompson M1A1', cls: 'SMG', model: 'thompson', kind: 'bullet', auto: true, rpm: 720, dmg: 21, mag: 30, reserve: 180, spread: 2.2, reload: 2.4, recoil: 0.012, zoom: 0.85, range: 24, sfx: G(1400, 0.12, 120, 0.75) },
+      { id: 'mg42', name: 'MG 42', cls: 'LMG', model: 'mg42', kind: 'bullet', auto: true, rpm: 1200, dmg: 24, mag: 75, reserve: 225, spread: 3.0, reload: 4.4, recoil: 0.011, zoom: 0.85, range: 55, slow: 0.82, sfx: G(2600, 0.09, 100, 0.7) },
+      { id: 'kar98k', name: 'Kar98k', cls: 'Bolt-action Rifle', model: 'gen', gen: { col: 'steel', fur: 'wood', len: 0.3, hg: 0.34, bar: 0.3, stock: 'wood', mag: 'none' }, kind: 'bullet', auto: false, rpm: 55, dmg: 105, mag: 5, reserve: 40, spread: 0.25, reload: 2.8, recoil: 0.06, zoom: 0.8, range: 120, pierce: 1, sfx: G(2000, 0.35, 70, 1.05) },
+      { id: 'bar', name: 'M1918 BAR', cls: 'Automatic Rifle', model: 'gen', gen: { col: 'steel', fur: 'wood', len: 0.36, hg: 0.2, bar: 0.32, stock: 'wood', mag: 'straight', bw: 1.3 }, kind: 'bullet', auto: true, rpm: 550, dmg: 34, mag: 20, reserve: 140, spread: 1.8, reload: 2.6, recoil: 0.018, zoom: 0.82, range: 55, slow: 0.9, sfx: G(2000, 0.16, 90, 0.9) },
+      { id: 'stg44', name: 'StG 44', cls: 'Assault Rifle', model: 'gen', gen: { col: 'steel', fur: 'wood', len: 0.34, hg: 0.18, bar: 0.2, stock: 'wood', mag: 'curved' }, kind: 'bullet', auto: true, rpm: 550, dmg: 29, mag: 30, reserve: 180, spread: 1.6, reload: 2.4, recoil: 0.014, zoom: 0.8, range: 40, sfx: G(1900, 0.13, 100, 0.85) },
     ],
+    secondaries: [
+      { id: 'm1911', name: 'Colt M1911', cls: 'Pistol', model: 'pistol', gen: { col: 'steel', fur: 'woodDark' }, kind: 'bullet', auto: false, rpm: 420, dmg: 34, mag: 7, reserve: 56, spread: 1.0, reload: 1.6, recoil: 0.03, zoom: 0.85, range: 20, slow: 1.08, sfx: G(2600, 0.12, 120, 0.75) },
+      { id: 'luger', name: 'Luger P08', cls: 'Pistol', model: 'pistol', gen: { col: 'black', fur: 'wood', toggle: true }, kind: 'bullet', auto: false, rpm: 480, dmg: 28, mag: 8, reserve: 64, spread: 0.8, reload: 1.5, recoil: 0.024, zoom: 0.85, range: 22, slow: 1.08, sfx: G(3000, 0.1, 130, 0.7) },
+    ],
+    lethals: { frag: 'Mk 2 Frag', sticky: 'No. 74 Sticky Bomb', impact: 'No. 69 Impact' },
+    tacticals: { smoke: 'M18 Smoke', flash: 'Concussion Grenade' },
+    armorName: 'Flak Vest',
   },
   cold: {
     name: 'Cold War', year: '1983', tag: 'Frozen border checkpoint',
@@ -28,14 +38,22 @@ export const ERAS = {
     buildingColors: [0x8a8d8f, 0x6f7477, 0x8c5b48, 0x7a7f6a], windowColor: 0x23272b,
     enemy: { body: 0x55603f, legs: 0x47503a, head: 0x3d4530, skin: 0xd2a98a, accent: 0x7a1f1f, visor: null },
     enemyName: 'Spetsnaz', enemyDmg: 10, tracer: 0xffb070,
-    weapons: [
-      { id: 'ak47', name: 'AK-47', model: 'ak47', kind: 'bullet', auto: true, rpm: 600, dmg: 31, mag: 30, reserve: 150, spread: 2.0, reload: 2.5, recoil: 0.018, zoom: 0.82,
-        sfx: { t: 'gun', f: 1700, decay: 0.15, thump: 85, gain: 0.9 } },
-      { id: 'm16a1', name: 'M16A1', model: 'm16a1', kind: 'bullet', auto: true, rpm: 750, dmg: 25, mag: 20, reserve: 160, spread: 1.3, reload: 2.2, recoil: 0.012, zoom: 0.78,
-        sfx: { t: 'gun', f: 3000, decay: 0.11, thump: 110, gain: 0.8 } },
-      { id: 'svd', name: 'Dragunov SVD', model: 'svd', kind: 'bullet', auto: false, rpm: 170, dmg: 90, mag: 10, reserve: 50, spread: 0.15, reload: 2.6, recoil: 0.05, zoom: 0.3, scope: true, pierce: 1,
-        sfx: { t: 'gun', f: 2400, decay: 0.3, thump: 70, gain: 1.0 } },
+    vehicle: { type: 't55', name: 'T-55', cannon: '100mm D-10T', color: 0x4a5a3a, speed: 8, hp: 950, reload: 2.8 },
+    primaries: [
+      { id: 'ak47', name: 'AK-47', cls: 'Assault Rifle', model: 'ak47', kind: 'bullet', auto: true, rpm: 600, dmg: 31, mag: 30, reserve: 150, spread: 2.0, reload: 2.5, recoil: 0.018, zoom: 0.82, range: 45, sfx: G(1700, 0.15, 85, 0.9) },
+      { id: 'm16a1', name: 'M16A1', cls: 'Assault Rifle', model: 'm16a1', kind: 'bullet', auto: true, rpm: 750, dmg: 25, mag: 20, reserve: 160, spread: 1.3, reload: 2.2, recoil: 0.012, zoom: 0.78, range: 50, sfx: G(3000, 0.11, 110, 0.8) },
+      { id: 'svd', name: 'Dragunov SVD', cls: 'Marksman Rifle', model: 'svd', builtinScope: true, defOptic: '4x', kind: 'bullet', auto: false, rpm: 170, dmg: 90, mag: 10, reserve: 50, spread: 0.15, reload: 2.6, recoil: 0.05, zoom: 0.8, range: 130, pierce: 1, sfx: G(2400, 0.3, 70, 1.0) },
+      { id: 'm60', name: 'M60', cls: 'LMG', model: 'gen', gen: { col: 'black', fur: 'black', len: 0.42, hg: 0.22, bar: 0.34, stock: 'black', mag: 'box', bw: 1.6, handle: true }, kind: 'bullet', auto: true, rpm: 550, dmg: 32, mag: 100, reserve: 200, spread: 2.8, reload: 5.0, recoil: 0.016, zoom: 0.85, range: 55, slow: 0.8, sfx: G(1800, 0.14, 85, 0.9) },
+      { id: 'ppsh', name: 'PPSh-41', cls: 'SMG', model: 'gen', gen: { col: 'steel', fur: 'wood', len: 0.3, hg: 0.12, bar: 0.2, stock: 'wood', mag: 'drum', jacket: true }, kind: 'bullet', auto: true, rpm: 1000, dmg: 18, mag: 71, reserve: 213, spread: 2.6, reload: 3.0, recoil: 0.009, zoom: 0.85, range: 20, sfx: G(1500, 0.08, 130, 0.65) },
+      { id: 'uzi', name: 'Uzi', cls: 'SMG', model: 'gen', gen: { col: 'black', fur: 'black', len: 0.24, hg: 0.06, bar: 0.08, stock: 'skel', mag: 'grip' }, kind: 'bullet', auto: true, rpm: 600, dmg: 20, mag: 32, reserve: 192, spread: 2.4, reload: 2.0, recoil: 0.01, zoom: 0.85, range: 18, slow: 1.06, sfx: G(2200, 0.09, 125, 0.65) },
     ],
+    secondaries: [
+      { id: 'makarov', name: 'Makarov PM', cls: 'Pistol', model: 'pistol', gen: { col: 'black', fur: 'black' }, kind: 'bullet', auto: false, rpm: 450, dmg: 26, mag: 8, reserve: 64, spread: 0.9, reload: 1.5, recoil: 0.024, zoom: 0.85, range: 18, slow: 1.08, sfx: G(2900, 0.1, 125, 0.7) },
+      { id: 'm1911c', name: 'M1911A1', cls: 'Pistol', model: 'pistol', gen: { col: 'grey', fur: 'black' }, kind: 'bullet', auto: false, rpm: 420, dmg: 34, mag: 7, reserve: 56, spread: 1.0, reload: 1.6, recoil: 0.03, zoom: 0.85, range: 20, slow: 1.08, sfx: G(2600, 0.12, 120, 0.75) },
+    ],
+    lethals: { frag: 'F1 Frag', sticky: 'Semtex Charge', impact: 'RGO Impact' },
+    tacticals: { smoke: 'RDG-2 Smoke', flash: 'Zarya Flashbang' },
+    armorName: 'Kevlar Vest',
   },
   modern: {
     name: 'Modern', year: '2026', tag: 'Desert port district',
@@ -45,14 +63,22 @@ export const ERAS = {
     buildingColors: [0xd9c49b, 0xc8b089, 0xb89f78, 0xe1d3b4], windowColor: 0x2b2a28,
     enemy: { body: 0x9a8a64, legs: 0x7d6f50, head: 0x5d5a48, skin: 0xb48a6a, accent: 0x222222, visor: 0x111111 },
     enemyName: 'Insurgent', enemyDmg: 11, tracer: 0xfff0a0,
-    weapons: [
-      { id: 'm4a1', name: 'M4A1', model: 'm4a1', kind: 'bullet', auto: true, rpm: 800, dmg: 25, mag: 30, reserve: 180, spread: 1.4, reload: 2.1, recoil: 0.011, zoom: 0.75,
-        sfx: { t: 'gun', f: 2800, decay: 0.11, thump: 115, gain: 0.8 } },
-      { id: 'hk416', name: 'HK416', model: 'hk416', kind: 'bullet', auto: true, rpm: 850, dmg: 27, mag: 30, reserve: 180, spread: 1.2, reload: 2.3, recoil: 0.012, zoom: 0.72,
-        sfx: { t: 'gun', f: 2500, decay: 0.12, thump: 105, gain: 0.82 } },
-      { id: 'barrett', name: 'Barrett M82', model: 'barrett', kind: 'bullet', auto: false, rpm: 95, dmg: 160, mag: 10, reserve: 30, spread: 0.1, reload: 3.2, recoil: 0.09, zoom: 0.22, scope: true, pierce: 3, slow: 0.85,
-        sfx: { t: 'gun', f: 1500, decay: 0.45, thump: 55, gain: 1.15 } },
+    vehicle: { type: 'abrams', name: 'M1A2 Abrams', cannon: '120mm M256', color: 0xb8a070, speed: 10, hp: 1100, reload: 2.5 },
+    primaries: [
+      { id: 'm4a1', name: 'M4A1', cls: 'Carbine', model: 'm4a1', kind: 'bullet', auto: true, rpm: 800, dmg: 25, mag: 30, reserve: 180, spread: 1.4, reload: 2.1, recoil: 0.011, zoom: 0.75, range: 45, sfx: G(2800, 0.11, 115, 0.8) },
+      { id: 'hk416', name: 'HK416', cls: 'Assault Rifle', model: 'hk416', kind: 'bullet', auto: true, rpm: 850, dmg: 27, mag: 30, reserve: 180, spread: 1.2, reload: 2.3, recoil: 0.012, zoom: 0.72, range: 50, sfx: G(2500, 0.12, 105, 0.82) },
+      { id: 'barrett', name: 'Barrett M82', cls: 'Anti-materiel Rifle', model: 'barrett', builtinScope: true, defOptic: '8x', kind: 'bullet', auto: false, rpm: 95, dmg: 160, mag: 10, reserve: 30, spread: 0.1, reload: 3.2, recoil: 0.09, zoom: 0.8, range: 180, pierce: 3, slow: 0.85, sfx: G(1500, 0.45, 55, 1.15) },
+      { id: 'scarh', name: 'SCAR-H', cls: 'Battle Rifle', model: 'gen', gen: { col: 'tan', fur: 'black', len: 0.34, hg: 0.28, bar: 0.2, stock: 'skel', mag: 'straight', rail: true }, kind: 'bullet', auto: true, rpm: 600, dmg: 37, mag: 20, reserve: 120, spread: 1.4, reload: 2.4, recoil: 0.02, zoom: 0.74, range: 65, sfx: G(2200, 0.15, 85, 0.95) },
+      { id: 'ak12', name: 'AK-12', cls: 'Assault Rifle', model: 'gen', gen: { col: 'black', fur: 'black', len: 0.36, hg: 0.24, bar: 0.2, stock: 'tube', mag: 'curved', rail: true }, kind: 'bullet', auto: true, rpm: 700, dmg: 30, mag: 30, reserve: 180, spread: 1.5, reload: 2.4, recoil: 0.014, zoom: 0.75, range: 48, sfx: G(1800, 0.14, 90, 0.88) },
+      { id: 'm249', name: 'M249 SAW', cls: 'LMG', model: 'gen', gen: { col: 'black', fur: 'tan', len: 0.42, hg: 0.22, bar: 0.3, stock: 'black', mag: 'box', handle: true, rail: true }, kind: 'bullet', auto: true, rpm: 800, dmg: 26, mag: 100, reserve: 300, spread: 2.6, reload: 4.6, recoil: 0.012, zoom: 0.8, range: 50, slow: 0.82, sfx: G(2700, 0.1, 105, 0.78) },
     ],
+    secondaries: [
+      { id: 'glock17', name: 'Glock 17', cls: 'Pistol', model: 'pistol', gen: { col: 'black', fur: 'black' }, kind: 'bullet', auto: false, rpm: 520, dmg: 25, mag: 17, reserve: 102, spread: 0.9, reload: 1.4, recoil: 0.022, zoom: 0.85, range: 20, slow: 1.08, sfx: G(3000, 0.1, 125, 0.72) },
+      { id: 'deagle', name: 'Desert Eagle', cls: 'Hand Cannon', model: 'pistol', gen: { col: 'grey', fur: 'black', big: true }, kind: 'bullet', auto: false, rpm: 220, dmg: 62, mag: 7, reserve: 42, spread: 1.1, reload: 1.9, recoil: 0.07, zoom: 0.82, range: 30, slow: 1.05, sfx: G(1600, 0.25, 80, 1.0) },
+    ],
+    lethals: { frag: 'M67 Frag', sticky: 'Semtex', impact: 'Impact Grenade' },
+    tacticals: { smoke: 'M18 Smoke', flash: 'M84 Flashbang' },
+    armorName: 'Plate Carrier',
   },
   future: {
     name: 'Futuristic', year: '2089', tag: 'Neon megacity plaza',
@@ -62,14 +88,21 @@ export const ERAS = {
     buildingColors: [0x23252f, 0x1b1d26, 0x2c2f3b, 0x30283a], windowColor: 0x0d0e14, neon: [0x00f0ff, 0xff2bd6, 0x8cff3a, 0xffb000],
     enemy: { body: 0x23262e, legs: 0x1a1c22, head: 0x2b2f38, skin: 0x2b2f38, accent: 0xff2bd6, visor: 0xff2bd6 },
     enemyName: 'Synth Trooper', enemyDmg: 12, tracer: 0xff40e0,
-    weapons: [
-      { id: 'smart', name: 'Smart Rifle', model: 'smart', kind: 'bullet', smart: true, auto: true, rpm: 660, dmg: 22, mag: 40, reserve: 200, spread: 1.4, reload: 2.0, recoil: 0.009, zoom: 0.75, tracer: 0x00f0ff,
-        sfx: { t: 'smart', f: 3600, decay: 0.08, thump: 160, gain: 0.7 } },
-      { id: 'railgun', name: 'Handheld Railgun', model: 'railgun', kind: 'rail', auto: false, rpm: 55, dmg: 220, mag: 4, reserve: 24, spread: 0.05, reload: 2.8, recoil: 0.08, zoom: 0.4, pierce: 8, tracer: 0x66ccff,
-        sfx: { t: 'rail' } },
-      { id: 'laser', name: 'Laser Rifle', model: 'laser', kind: 'beam', auto: true, rpm: 900, dmg: 12, mag: 100, reserve: 300, spread: 0.3, reload: 2.4, recoil: 0.002, zoom: 0.7, tracer: 0xff3030,
-        sfx: { t: 'laser' } },
+    vehicle: { type: 'hover', name: 'HT-9 Hover Tank', cannon: 'Mass Driver', color: 0x2a2d38, speed: 12, hp: 1000, reload: 1.9 },
+    primaries: [
+      { id: 'smart', name: 'Smart Rifle', cls: 'Smart Rifle', model: 'smart', kind: 'bullet', smart: true, auto: true, rpm: 660, dmg: 22, mag: 40, reserve: 200, spread: 1.4, reload: 2.0, recoil: 0.009, zoom: 0.75, range: 45, tracer: 0x00f0ff, sfx: { t: 'smart', f: 3600, decay: 0.08, thump: 160, gain: 0.7 } },
+      { id: 'railgun', name: 'Handheld Railgun', cls: 'Railgun', model: 'railgun', kind: 'rail', auto: false, rpm: 55, dmg: 220, mag: 4, reserve: 24, spread: 0.05, reload: 2.8, recoil: 0.08, zoom: 0.4, range: 200, pierce: 8, tracer: 0x66ccff, sfx: { t: 'rail' } },
+      { id: 'laser', name: 'Laser Rifle', cls: 'Energy Rifle', model: 'laser', kind: 'beam', auto: true, rpm: 900, dmg: 12, mag: 100, reserve: 300, spread: 0.3, reload: 2.4, recoil: 0.002, zoom: 0.7, range: 70, tracer: 0xff3030, sfx: { t: 'laser' } },
+      { id: 'pulsesmg', name: 'Pulse SMG', cls: 'SMG', model: 'gen', gen: { col: 'white', fur: 'dark', len: 0.26, hg: 0.1, bar: 0.1, stock: 'none', mag: 'straight', glow: 0x00f0ff }, kind: 'bullet', auto: true, rpm: 1100, dmg: 15, mag: 50, reserve: 250, spread: 2.2, reload: 1.8, recoil: 0.007, zoom: 0.8, range: 22, slow: 1.06, tracer: 0x00f0ff, sfx: { t: 'smart', f: 4200, decay: 0.06, thump: 180, gain: 0.6 } },
+      { id: 'arcshotgun', name: 'Arc Shotgun', cls: 'Shotgun', model: 'gen', gen: { col: 'dark', fur: 'grey', len: 0.36, hg: 0.2, bar: 0.22, stock: 'black', mag: 'none', glow: 0xff2bd6, bw: 2 }, kind: 'bullet', auto: false, pellets: 8, rpm: 110, dmg: 15, mag: 8, reserve: 48, spread: 5.5, reload: 2.6, recoil: 0.05, zoom: 0.85, range: 14, tracer: 0xff40e0, sfx: G(1300, 0.3, 70, 1.1) },
     ],
+    secondaries: [
+      { id: 'magpistol', name: 'Mag Pistol', cls: 'Pistol', model: 'pistol', gen: { col: 'white', fur: 'dark', glow: 0x00f0ff }, kind: 'bullet', auto: false, rpm: 450, dmg: 30, mag: 15, reserve: 90, spread: 0.8, reload: 1.4, recoil: 0.025, zoom: 0.85, range: 24, slow: 1.08, tracer: 0x00f0ff, sfx: { t: 'smart', f: 3200, decay: 0.08, thump: 150, gain: 0.7 } },
+      { id: 'ionblaster', name: 'Ion Blaster', cls: 'Energy Pistol', model: 'pistol', gen: { col: 'dark', fur: 'grey', glow: 0xff2bd6 }, kind: 'plasma', auto: false, rpm: 300, dmg: 36, mag: 10, reserve: 60, spread: 0.6, reload: 1.6, recoil: 0.03, zoom: 0.85, range: 40, speed: 60, splash: 1.0, slow: 1.08, tracer: 0xff40e0, sfx: { t: 'plasma' } },
+    ],
+    lethals: { frag: 'Smart Frag', sticky: 'Mag-Sticky', impact: 'Impact Charge' },
+    tacticals: { smoke: 'Nano-Smoke', flash: 'Flash Pulse' },
+    armorName: 'Nano-weave Armor',
   },
   space: {
     name: 'Space', year: '2240', tag: 'Lunar outpost — low gravity',
@@ -79,14 +112,21 @@ export const ERAS = {
     buildingColors: [0xe8e8ec, 0xd0d3da, 0xb7bcc6, 0xf0ece0], windowColor: 0x1b2a44, neon: [0x40a0ff, 0xffa030],
     enemy: { body: 0xd8d8dc, legs: 0xb0b0b8, head: 0xe6e6ea, skin: 0xe6e6ea, accent: 0xff7a00, visor: 0xffb000 },
     enemyName: 'Void Marine', enemyDmg: 12, tracer: 0x9cff60,
-    weapons: [
-      { id: 'plasma', name: 'Plasma Rifle', model: 'plasma', kind: 'plasma', auto: true, rpm: 450, dmg: 34, mag: 36, reserve: 180, spread: 0.9, reload: 2.2, recoil: 0.01, zoom: 0.75, speed: 70, splash: 1.4, adsX: 0.05, tracer: 0x80ff40,
-        sfx: { t: 'plasma' } },
-      { id: 'coilgun', name: 'Coilgun', model: 'coilgun', kind: 'rail', auto: false, rpm: 130, dmg: 115, mag: 8, reserve: 48, spread: 0.1, reload: 2.5, recoil: 0.05, zoom: 0.45, pierce: 2, tracer: 0x60d0ff,
-        sfx: { t: 'coil' } },
-      { id: 'missile', name: 'Micro-missile Launcher', model: 'missile', kind: 'missile', auto: false, rpm: 160, dmg: 110, mag: 6, reserve: 30, spread: 0.6, reload: 3.0, recoil: 0.06, zoom: 0.8, speed: 32, splash: 4.2, adsX: 0.09, tracer: 0xffa040,
-        sfx: { t: 'missile' } },
+    vehicle: { type: 'rover', name: 'LRV-T Lunar Rover Tank', cannon: 'Plasma Cannon', color: 0xe4e4e8, speed: 9, hp: 900, reload: 2.0 },
+    primaries: [
+      { id: 'plasma', name: 'Plasma Rifle', cls: 'Plasma Rifle', model: 'plasma', kind: 'plasma', auto: true, rpm: 450, dmg: 34, mag: 36, reserve: 180, spread: 0.9, reload: 2.2, recoil: 0.01, zoom: 0.75, range: 60, speed: 70, splash: 1.4, adsX: 0.05, tracer: 0x80ff40, sfx: { t: 'plasma' } },
+      { id: 'coilgun', name: 'Coilgun', cls: 'Coil Rifle', model: 'coilgun', kind: 'rail', auto: false, rpm: 130, dmg: 115, mag: 8, reserve: 48, spread: 0.1, reload: 2.5, recoil: 0.05, zoom: 0.45, range: 140, pierce: 2, tracer: 0x60d0ff, sfx: { t: 'coil' } },
+      { id: 'missile', name: 'Micro-missile Launcher', cls: 'Launcher', model: 'missile', kind: 'missile', auto: false, rpm: 160, dmg: 110, mag: 6, reserve: 30, spread: 0.6, reload: 3.0, recoil: 0.06, zoom: 0.8, range: 100, speed: 32, splash: 4.2, adsX: 0.09, slow: 0.9, tracer: 0xffa040, sfx: { t: 'missile' } },
+      { id: 'gausssmg', name: 'Gauss SMG', cls: 'SMG', model: 'gen', gen: { col: 'white', fur: 'grey', len: 0.28, hg: 0.14, bar: 0.14, stock: 'none', mag: 'straight', glow: 0x60d0ff }, kind: 'bullet', auto: true, rpm: 950, dmg: 17, mag: 48, reserve: 240, spread: 2.0, reload: 1.9, recoil: 0.008, zoom: 0.8, range: 24, slow: 1.05, tracer: 0x60d0ff, sfx: { t: 'coil' } },
+      { id: 'ionrepeater', name: 'Ion Repeater', cls: 'Energy LMG', model: 'gen', gen: { col: 'grey', fur: 'white', len: 0.38, hg: 0.26, bar: 0.2, stock: 'black', mag: 'box', glow: 0x9cff60 }, kind: 'beam', auto: true, rpm: 800, dmg: 13, mag: 120, reserve: 360, spread: 0.4, reload: 2.6, recoil: 0.003, zoom: 0.75, range: 60, slow: 0.9, tracer: 0x9cff60, sfx: { t: 'laser' } },
     ],
+    secondaries: [
+      { id: 'plasmapistol', name: 'Plasma Pistol', cls: 'Energy Pistol', model: 'pistol', gen: { col: 'white', fur: 'grey', glow: 0x80ff40 }, kind: 'plasma', auto: false, rpm: 330, dmg: 32, mag: 12, reserve: 72, spread: 0.6, reload: 1.6, recoil: 0.025, zoom: 0.85, range: 40, speed: 55, splash: 1.1, slow: 1.08, tracer: 0x80ff40, sfx: { t: 'plasma' } },
+      { id: 'needler', name: 'Needler', cls: 'Machine Pistol', model: 'pistol', gen: { col: 'grey', fur: 'dark', glow: 0xffa030 }, kind: 'bullet', auto: true, rpm: 600, dmg: 14, mag: 24, reserve: 144, spread: 1.8, reload: 1.6, recoil: 0.01, zoom: 0.85, range: 18, slow: 1.08, tracer: 0xffa040, sfx: { t: 'smart', f: 5000, decay: 0.05, thump: 200, gain: 0.55 } },
+    ],
+    lethals: { plasma: 'Plasma Grenade', frag: 'Pulse Frag', impact: 'Impact Charge' },
+    tacticals: { smoke: 'Regolith Smoke', flash: 'Photon Flash' },
+    armorName: 'Exo-suit Plating',
   },
 };
 

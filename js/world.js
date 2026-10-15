@@ -229,7 +229,7 @@ export function buildWorld(scene, era, key) {
   };
 }
 
-function insideAny(cols, x, z, r) {
+export function insideAny(cols, x, z, r) {
   for (const c of cols) if (x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ) return true;
   return false;
 }

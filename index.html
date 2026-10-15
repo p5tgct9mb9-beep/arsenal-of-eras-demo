@@ -30,8 +30,10 @@
   <div id="killfeed"></div>
   <div id="center-msg"></div>
   <div id="reloadbar"><div id="reloadfill"></div><span>RELOADING</span></div>
-  <div id="health"><span class="lbl">HP</span><div id="hpbar"><div id="hpfill"></div></div><span id="hptext">100</span></div>
-  <div id="ammo"><div id="wname"></div><div class="nums"><span id="mag">0</span><span id="res"> / 0</span></div><div id="slots"></div></div>
+  <div id="flashfx"></div>
+  <div id="prompt"></div>
+  <div id="health"><span class="lbl" id="hplbl">HP</span><div id="hpbar"><div id="hpfill"></div></div><span id="hptext">100</span></div>
+  <div id="ammo"><div id="wname"></div><div class="nums"><span id="mag">0</span><span id="res"> / 0</span></div><div id="slots"></div><div id="nades"></div><div id="ammo-veh"></div></div>
 </div>
 
 <div id="touch" class="hidden">
@@ -42,6 +44,9 @@
   <div class="tbtn" id="b-reload" data-b="reload">R</div>
   <div class="tbtn" id="b-swap" data-b="swap">⇄</div>
   <div class="tbtn" id="b-jump" data-b="jump">▲</div>
+  <div class="tbtn" id="b-nade" data-b="nade">💣</div>
+  <div class="tbtn" id="b-tac" data-b="tac">☁</div>
+  <div class="tbtn" id="b-enter" data-b="enter">ENTER</div>
 </div>
 
 <div id="title" class="screen">
@@ -58,6 +63,7 @@
   <div class="panel small">
     <h2>PAUSED</h2>
     <button id="btn-resume" class="big">Resume</button>
+    <button id="btn-lo-pause">Loadout</button>
     <button id="btn-restart">Restart era</button>
     <button id="btn-menu">Era select</button>
   </div>
@@ -68,7 +74,24 @@
     <h2 class="kia">K.I.A.</h2>
     <div id="over-stats"></div>
     <button id="btn-again" class="big">Restart</button>
+    <button id="btn-lo-over">Change loadout</button>
     <button id="btn-menu2">Era select</button>
+  </div>
+</div>
+
+<div id="loadout" class="screen hidden">
+  <div class="lo">
+    <div class="lo-head"><button id="lo-back" class="lo-btn">‹ Back</button><b id="lo-era"></b><span class="lo-title">LOADOUT</span></div>
+    <div class="lo-body">
+      <div class="lo-tabs" id="lo-tabs"></div>
+      <div class="lo-opts" id="lo-opts"></div>
+      <div class="lo-side">
+        <div id="lo-preview"></div>
+        <div id="lo-wname"></div>
+        <div id="lo-stats"></div>
+        <button id="lo-deploy" class="lo-btn big">DEPLOY ▶</button>
+      </div>
+    </div>
   </div>
 </div>
 
