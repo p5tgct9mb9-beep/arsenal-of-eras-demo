@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Arsenal of Eras">
+<meta name="theme-color" content="#0b0d10">
+<meta name="description" content="Arsenal of Eras — browser prototype demo. Wave survival FPS across WW2, Cold War, Modern, Futuristic and Space eras.">
+<title>Arsenal of Eras — Prototype Demo</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<div id="game"></div>
+
+<div id="hud" class="hidden">
+  <div id="crosshair"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><i class="dot"></i></div>
+  <div id="hitmarker"></div>
+  <div id="lock"></div>
+  <div id="scope"><div class="ring"></div></div>
+  <div id="dmg"></div>
+  <div id="dmgdir"><i></i></div>
+  <div id="topbar"><span id="era-tag"></span><span id="wave">WAVE —</span><span id="score">0</span><span id="enemies"></span></div>
+  <div id="killfeed"></div>
+  <div id="center-msg"></div>
+  <div id="reloadbar"><div id="reloadfill"></div><span>RELOADING</span></div>
+  <div id="health"><span class="lbl">HP</span><div id="hpbar"><div id="hpfill"></div></div><span id="hptext">100</span></div>
+  <div id="ammo"><div id="wname"></div><div class="nums"><span id="mag">0</span><span id="res"> / 0</span></div><div id="slots"></div></div>
+</div>
+
+<div id="touch" class="hidden">
+  <div id="joy"><div id="knob"></div></div>
+  <div class="tbtn" id="b-pause" data-b="pause">II</div>
+  <div class="tbtn" id="b-fire" data-b="fire">FIRE</div>
+  <div class="tbtn" id="b-ads" data-b="ads">AIM</div>
+  <div class="tbtn" id="b-reload" data-b="reload">R</div>
+  <div class="tbtn" id="b-swap" data-b="swap">⇄</div>
+  <div class="tbtn" id="b-jump" data-b="jump">▲</div>
+</div>
+
+<div id="title" class="screen">
+  <div class="panel">
+    <h1>ARSENAL OF ERAS <small>— Prototype Demo</small></h1>
+    <p class="sub">Wave survival · choose your era</p>
+    <div id="eras"></div>
+    <p id="controls" class="controls"></p>
+    <p class="fine">Browser prototype by LT Vasquez — not the final Unreal Engine 5 game. Sound on? Flip your iPhone's silent switch off.</p>
+  </div>
+</div>
+
+<div id="pause" class="screen hidden">
+  <div class="panel small">
+    <h2>PAUSED</h2>
+    <button id="btn-resume" class="big">Resume</button>
+    <button id="btn-restart">Restart era</button>
+    <button id="btn-menu">Era select</button>
+  </div>
+</div>
+
+<div id="over" class="screen hidden">
+  <div class="panel small">
+    <h2 class="kia">K.I.A.</h2>
+    <div id="over-stats"></div>
+    <button id="btn-again" class="big">Restart</button>
+    <button id="btn-menu2">Era select</button>
+  </div>
+</div>
+
+<div id="rotate"><div class="phone"></div><p>Rotate your phone to landscape</p></div>
+<div id="loading">LOADING…</div>
+<noscript>This demo needs JavaScript and WebGL.</noscript>
+<script type="module" src="js/main.js"></script>
+<script>
+  // Surface fatal module/WebGL errors instead of a silent black screen
+  window.addEventListener('error', function (e) { var l = document.getElementById('loading'); if (l) l.textContent = 'Failed to start: ' + (e.message || 'error') + ' — check your connection and reload.'; });
+</script>
+</body>
+</html>
